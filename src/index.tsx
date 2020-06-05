@@ -3,5 +3,5 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 
-const apiUrl = process.env.REACT_APP_API_URL || "/api";
-ReactDOM.render(<App apiUrl={apiUrl} />, document.getElementById("root"));
+const portainerUrl = process.env.REACT_APP_PORTAINER_URL || "http://localhost:9000";
+ReactDOM.render(<App portainerUrl={portainerUrl} />, document.getElementById("root"));
