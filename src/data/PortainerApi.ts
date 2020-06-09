@@ -1,7 +1,7 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import _ from "lodash";
 import { Either, StringEither } from "../utils/Either";
-import { ContainerApi } from "./PortainerApiTypes";
+import { ContainerApi, NewStackApi } from "./PortainerApiTypes";
 
 type Token = string;
 type LoginResponseSuccess = { jwt: Token };
@@ -42,23 +42,54 @@ export class PortainerApi {
         }
     }
 
+    private async request<T>(request: AxiosRequestConfig) {
+        const response = await axios({
+            method: "GET",
+            headers: { Authorization: `Bearer ${this.options.token}` },
+            validateStatus: _status => true,
+            ...request,
+        });
+        const { status } = response;
+
+        if ((status >= 200 && status < 300) || [304].includes(status)) {
+            return Either.success(response.data as T);
+        } else {
+            const msg = _.compact([status, JSON.stringify(response.data)]).join(" - ");
+            return Either.error(msg);
+        }
+    }
+
+    async startContainer(containerId: string): Promise<ApiRes<void>> {
+        return this.request({
+            method: "POST",
+            url: `${this.apiUrl}/endpoints/1/docker/containers/${containerId}/start`,
+        });
+    }
+
+    async stopContainer(containerId: string): Promise<ApiRes<void>> {
+        return this.request({
+            method: "POST",
+            url: `${this.apiUrl}/endpoints/1/docker/containers/${containerId}/stop`,
+        });
+    }
+
+    async createStack(endpointId: number, newStackApi: NewStackApi): Promise<ApiRes<void>> {
+        return this.request({
+            method: "POST",
+            url: `${this.apiUrl}/stacks?endpointId=${endpointId}&method=repository&type=2`,
+            data: newStackApi,
+        });
+    }
+
     async getContainers(options: {
         endpointId: number;
         all: boolean;
     }): Promise<ApiRes<ContainerApi[]>> {
-        const response = await axios({
+        return this.request({
             method: "GET",
             url: `${this.apiUrl}/endpoints/${options.endpointId}/docker/containers/json`,
             params: { all: options.all },
-            validateStatus: _status => true,
         });
-
-        if (response.status === 200) {
-            return Either.success(response.data as ContainerApi[]);
-        } else {
-            const msg = _.compact([response.status, JSON.stringify(response.data)]).join(" - ");
-            return Either.error(msg);
-        }
     }
 }
 

@@ -59,3 +59,11 @@ interface Mount {
 interface HostConfig {
     NetworkMode: string;
 }
+
+export interface NewStackApi {
+    Name: string;
+    RepositoryURL: string;
+    RepositoryReferenceName: string;
+    ComposeFilePathInRepository: string;
+    Env: Array<{ name: string; value: string }>;
+}

@@ -3,6 +3,7 @@ import { AppContextProvider } from "./components/AppContext";
 import { LoginPage } from "./components/pages/LoginPage";
 import { User } from "./domain/entities/User";
 import { RootPage } from "./components/pages/RootPage";
+import { SnackbarProvider } from "d2-ui-components";
 
 interface AppProps {
     portainerUrl: string;
@@ -27,11 +28,13 @@ const App: React.FC<AppProps> = React.memo(props => {
 
     return (
         <AppContextProvider value={value}>
-            {currentUser ? (
-                <RootPage logout={logout} />
-            ) : (
-                <LoginPage setCurrentUser={setCurrentUserAndPersist} />
-            )}
+            <SnackbarProvider>
+                {currentUser ? (
+                    <RootPage logout={logout} />
+                ) : (
+                    <LoginPage setCurrentUser={setCurrentUserAndPersist} />
+                )}
+            </SnackbarProvider>
         </AppContextProvider>
     );
 });

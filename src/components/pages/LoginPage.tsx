@@ -58,6 +58,13 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
         login.match({ success: setCurrentUser, error: setError });
     }, [compositionRoot, username, password, setCurrentUser]);
 
+    const loginIfEnter = React.useCallback(
+        (ev: React.KeyboardEvent<HTMLDivElement>) => {
+            if (ev.key === "Enter") login();
+        },
+        [login]
+    );
+
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline />
@@ -70,7 +77,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                     {i18n.t("Sign in")}
                 </Typography>
 
-                <form className={classes.form} noValidate>
+                <div className={classes.form}>
                     <TextField
                         variant="outlined"
                         margin="normal"
@@ -81,6 +88,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                         autoFocus
                         onChange={ev => setUsername(ev.currentTarget.value)}
                         value={username}
+                        onKeyPress={loginIfEnter}
                     />
 
                     <TextField
@@ -94,6 +102,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                         type="password"
                         autoComplete="current-password"
                         value={password}
+                        onKeyPress={loginIfEnter}
                     />
 
                     <Button
@@ -109,7 +118,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                     <Grow in={!!error}>
                         <div className={classes.feedback}>{error}</div>
                     </Grow>
-                </form>
+                </div>
             </div>
         </Container>
     );
