@@ -13,30 +13,44 @@ interface RootPageProps {
     logout: () => void;
 }
 
+const refreshRate = 10;
+
 export const RootPage: React.FC<RootPageProps> = React.memo(props => {
     const { logout } = props;
     const { compositionRoot, currentUser } = useLoggedAppContext();
-    const [containers, setContainers] = React.useState<D2Container[] | undefined>();
+    const [containers, setContainers] = React.useState<D2Container[]>([]);
     const snackbar = useSnackbar();
 
-    React.useEffect(() => {
+    const getContainers = React.useCallback(() => {
         compositionRoot.containers.get({ endpointId }).then(res => {
             res.match({ success: setContainers, error: error => snackbar.error(error) });
         });
     }, [compositionRoot]);
 
+    React.useEffect(() => {
+        getContainers();
+        //const intervalId = setInterval(getContainers, refreshRate * 1000);
+        //return () => clearInterval(intervalId);
+    }, [getContainers]);
+
     return (
         <div>
             <div style={{ float: "right", margin: 5 }}>
-                Logged in as <b>{currentUser.username}</b>{" "}
-                <button onClick={logout}>{i18n.t("logout")}</button>
+                {i18n.t("Logged in as")} <b>{currentUser.username}</b>
+                <button style={{ marginLeft: 5 }} onClick={logout}>
+                    {i18n.t("logout")}
+                </button>
             </div>
             <div style={{ clear: "both" }}></div>
 
             <HashRouter>
                 <Switch>
                     <Route path="/new" render={() => <NewContainerPage />} />
-                    <Route render={() => <ContainersList containers={containers || []} />} />
+                    <Route
+                        render={() => (
+                            <ContainersList containers={containers} onRefresh={getContainers} />
+                        )}
+                    />
                 </Switch>
             </HashRouter>
         </div>

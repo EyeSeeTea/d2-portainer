@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import _ from "lodash";
 import { Either, StringEither } from "../utils/Either";
-import { ContainerApi, NewStackApi } from "./PortainerApiTypes";
+import { ContainerApi, PostStackRequest, PostStackResponse, Permission } from "./PortainerApiTypes";
 
 type Token = string;
 type LoginResponseSuccess = { jwt: Token };
@@ -37,7 +37,8 @@ export class PortainerApi {
             const api = new PortainerApi({ baseUrl, token: loginResponse.jwt });
             return Either.success(api);
         } else {
-            const msg = `${loginResponse.message}: ${loginResponse.details}`;
+            const parts = [loginResponse.message, loginResponse.details];
+            const msg = _.compact(parts).join(" - ") || "Cannot login";
             return Either.error(msg);
         }
     }
@@ -73,11 +74,22 @@ export class PortainerApi {
         });
     }
 
-    async createStack(endpointId: number, newStackApi: NewStackApi): Promise<ApiRes<void>> {
+    async createStack(
+        endpointId: number,
+        newStackApi: PostStackRequest
+    ): Promise<ApiRes<PostStackResponse>> {
         return this.request({
             method: "POST",
             url: `${this.apiUrl}/stacks?endpointId=${endpointId}&method=repository&type=2`,
             data: newStackApi,
+        });
+    }
+
+    async setPermission(resourceId: number, permission: Permission): Promise<ApiRes<void>> {
+        return this.request({
+            method: "PUT",
+            url: `${this.apiUrl}/resource_controls/${resourceId}`,
+            data: permission,
         });
     }
 

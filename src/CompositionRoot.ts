@@ -6,6 +6,7 @@ import { User } from "./domain/entities/User";
 import { LoginUser } from "./domain/usecases/LoginUser";
 import { UsersPortainerRepository } from "./data/UsersPortainerRepository";
 import { GetD2Containers } from "./domain/usecases/GetD2Containers";
+import { GetD2ContainerStats } from "./domain/usecases/GetD2ContainerStats";
 
 export class CompositionRoot {
     constructor(public options: { portainerUrl: string; currentUser?: User }) {}
@@ -39,12 +40,14 @@ export class CompositionRoot {
         const start = new StartD2Containers(this.containersRepository);
         const stop = new StopD2Containers(this.containersRepository);
         const create = new CreateD2Container(this.containersRepository);
+        const getStats = new GetD2ContainerStats(this.containersRepository);
 
         return {
             get: get.execute.bind(get),
             start: start.execute.bind(start),
             stop: stop.execute.bind(stop),
             create: create.execute.bind(create),
+            getStats: getStats.execute.bind(getStats),
         };
     }
 }

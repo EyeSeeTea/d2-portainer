@@ -52,15 +52,19 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
     const [password, setPassword] = React.useState("");
     const [error, setError] = React.useState("");
 
+    const fieldsFilled = username.trim() && password.trim();
+
     const login = React.useCallback(async () => {
-        setError("");
-        const login = await compositionRoot.users.login(username, password);
-        login.match({ success: setCurrentUser, error: setError });
+        if (fieldsFilled) {
+            setError("");
+            const login = await compositionRoot.users.login(username.trim(), password.trim());
+            login.match({ success: setCurrentUser, error: setError });
+        }
     }, [compositionRoot, username, password, setCurrentUser]);
 
     const loginIfEnter = React.useCallback(
         (ev: React.KeyboardEvent<HTMLDivElement>) => {
-            if (ev.key === "Enter") login();
+            if (ev.key === "Enter" && fieldsFilled) login();
         },
         [login]
     );

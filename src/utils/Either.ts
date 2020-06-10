@@ -29,6 +29,13 @@ export class Either<Error, Data> {
         });
     }
 
+    flatMap<Res>(fn: (data: Data) => Either<Error, Res>): Either<Error, Res> {
+        return this.match({
+            success: data => fn(data),
+            error: () => this as Either<Error, any>,
+        });
+    }
+
     static error<Error>(error: Error) {
         return new Either<Error, never>({ type: "error", error });
     }

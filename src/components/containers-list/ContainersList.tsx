@@ -7,45 +7,56 @@ import {
     TableState,
     TableSelection,
     useSnackbar,
+    SnackbarState,
+    TableGlobalAction,
 } from "d2-ui-components";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
-import PlayArrow from "@material-ui/icons/PlayArrow";
-import Stop from "@material-ui/icons/Stop";
-import { D2Container, filterContainers } from "../../domain/entities/D2Container";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
+import StopIcon from "@material-ui/icons/Stop";
+import EqualizerIcon from "@material-ui/icons/Equalizer";
+import SyncIcon from "@material-ui/icons/Sync";
+import { D2Container, D2ContainerMethods } from "../../domain/entities/D2Container";
 
 import { i18n } from "../../i18n";
 import { useHistory } from "react-router-dom";
-import { useAppContext } from "../AppContext";
-import { CompositionRoot } from "../../CompositionRoot";
-import { Snackbar } from "@material-ui/core";
+import { useAppContext, useLoggedAppContext } from "../AppContext";
+import { ContainersStats } from "../containers-stats/ContainersStats";
+import { StringEither } from "../../utils/Either";
 
 interface ContainersListProps {
     containers: D2Container[];
+    onRefresh: () => void;
 }
 
 export const ContainersList: React.FC<ContainersListProps> = React.memo(props => {
-    const { containers } = props;
+    const { containers, onRefresh } = props;
 
+    const { compositionRoot } = useLoggedAppContext();
     const [rows, setRows] = React.useState<D2Container[]>([]);
     const [search, setSearch] = React.useState<string>("");
+    const [stats, setStats] = React.useState<D2Container | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
     const history = useHistory();
     const snackbar = useSnackbar();
-    const { compositionRoot } = useAppContext();
+
+    /*
+    React.useEffect(() => {
+        containers.length && setStats(containers[0]);
+    }, [containers]);
+    */
 
     React.useEffect(() => {
-        setRows(filterContainers(containers, search));
+        setRows(D2ContainerMethods.filterContainers(containers, search));
     }, [search, containers]);
 
     const stop = React.useCallback(
         (ids: string[]) => {
-            const d2Containers = containers.filter(container => ids.includes(container.id));
-            compositionRoot.containers.stop(d2Containers).then(res =>
-                res.match({
-                    success: () => snackbar.success(i18n.t("Containers stopped")),
-                    error: snackbar.error,
-                })
+            const d2Containers = D2ContainerMethods.getById(containers, ids);
+            showFeedback(
+                compositionRoot.containers.stop(d2Containers),
+                snackbar,
+                i18n.t("Containers stopped")
             );
         },
         [compositionRoot, containers]
@@ -53,15 +64,21 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
 
     const start = React.useCallback(
         (ids: string[]) => {
-            const d2Containers = containers.filter(container => ids.includes(container.id));
-            compositionRoot.containers.start(d2Containers).then(res =>
-                res.match({
-                    success: () => snackbar.success(i18n.t("Containers started")),
-                    error: snackbar.error,
-                })
+            const d2Containers = D2ContainerMethods.getById(containers, ids);
+            showFeedback(
+                compositionRoot.containers.start(d2Containers),
+                snackbar,
+                i18n.t("Containers started")
             );
         },
         [compositionRoot, containers]
+    );
+
+    const globalActions: TableGlobalAction[] = React.useMemo(
+        () => [
+            { name: "refresh", text: i18n.t("Refresh"), icon: <SyncIcon />, onClick: onRefresh },
+        ],
+        []
     );
 
     const actions: TableAction<D2Container>[] = React.useMemo(
@@ -73,6 +90,30 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 primary: true,
             },
             {
+                name: "stats",
+                text: i18n.t("Stats"),
+                multiple: false,
+                onClick: ids => setStats(D2ContainerMethods.getById(containers, ids)[0]),
+                icon: <EqualizerIcon />,
+                isActive: D2ContainerMethods.isRunning,
+            },
+            {
+                name: "start",
+                text: i18n.t("Start"),
+                multiple: true,
+                onClick: start,
+                icon: <PlayArrowIcon />,
+                isActive: D2ContainerMethods.isStopped,
+            },
+            {
+                name: "stop",
+                text: i18n.t("Stop"),
+                multiple: true,
+                onClick: stop,
+                icon: <StopIcon />,
+                isActive: D2ContainerMethods.isRunning,
+            },
+            {
                 name: "edit",
                 text: i18n.t("Edit"),
                 multiple: false,
@@ -80,28 +121,14 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 icon: <EditIcon />,
             },
             {
-                name: "start",
-                text: i18n.t("Start"),
-                multiple: true,
-                onClick: start,
-                icon: <PlayArrow />,
-            },
-            {
-                name: "stop",
-                text: i18n.t("Stop"),
-                multiple: true,
-                onClick: stop,
-                icon: <Stop />,
-            },
-            {
                 name: "delete",
                 text: i18n.t("Delete"),
                 multiple: true,
-                onClick: stop,
+                onClick: console.log,
                 icon: <DeleteIcon />,
             },
         ],
-        [stop]
+        [stop, setStats]
     );
 
     const updateTable = React.useCallback(
@@ -113,17 +140,26 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
         history.push("/new");
     }, []);
 
+    const closeStats = React.useCallback(() => {
+        setStats(undefined);
+    }, [setStats]);
+
     return (
-        <ObjectsTable<D2Container>
-            rows={rows}
-            columns={columns}
-            details={details}
-            actions={actions}
-            onActionButtonClick={createInstance}
-            onChangeSearch={setSearch}
-            selection={selection}
-            onChange={updateTable}
-        />
+        <React.Fragment>
+            {stats && <ContainersStats d2Container={stats} onClose={closeStats} />}
+
+            <ObjectsTable<D2Container>
+                rows={rows}
+                columns={columns}
+                details={details}
+                actions={actions}
+                globalActions={globalActions}
+                onActionButtonClick={createInstance}
+                onChangeSearch={setSearch}
+                selection={selection}
+                onChange={updateTable}
+            />
+        </React.Fragment>
     );
 });
 
@@ -143,3 +179,16 @@ const details: ObjectsTableDetailField<D2Container>[] = columns.map(column => ({
     name: column.name,
     text: column.text,
 }));
+
+function showFeedback<T>(
+    value: Promise<StringEither<T>>,
+    snackbar: SnackbarState,
+    successMsg: string
+) {
+    return value.then(res =>
+        res.match({
+            success: () => snackbar.success(successMsg),
+            error: errorMsg => snackbar.error(errorMsg),
+        })
+    );
+}

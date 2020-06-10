@@ -7,4 +7,9 @@ export interface ContainersRepository {
     start(d2Container: D2Container): Promise<StringEither<void>>;
     stop(d2Container: D2Container): Promise<StringEither<void>>;
     create(d2NewContainer: D2NewContainer): Promise<StringEither<void>>;
+    getStatsUrls(d2Container: D2Container): D2ContainerStats;
 }
+
+type Url = string;
+
+export type D2ContainerStats = Record<"core" | "db" | "gateway", Url>;

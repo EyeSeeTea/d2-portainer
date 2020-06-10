@@ -60,10 +60,46 @@ interface HostConfig {
     NetworkMode: string;
 }
 
-export interface NewStackApi {
+export interface PostStackRequest {
     Name: string;
     RepositoryURL: string;
     RepositoryReferenceName: string;
     ComposeFilePathInRepository: string;
-    Env: Array<{ name: string; value: string }>;
+    Env: EnvVariable[];
+}
+
+export interface EnvVariable {
+    name: string;
+    value: string;
+}
+
+export interface PostStackResponse {
+    Id: number;
+    Name: string;
+    Type: number;
+    EndpointId: number;
+    SwarmId: string;
+    EntryPoint: string;
+    Env: EnvVariable[];
+    ResourceControl: {
+        Id: number;
+        ResourceId: string;
+        /*
+        SubResourceIds: [];
+        Type: number;
+        UserAccesses: [{ UserId: 1; AccessLevel: 1 }];
+        TeamAccesses: [];
+        Public: false;
+        AdministratorsOnly: false;
+        System: false;
+        */
+    };
+    ProjectPath: string;
+}
+
+export interface Permission {
+    AdministratorsOnly: boolean;
+    Public: boolean;
+    Users: number[];
+    Teams: number[];
 }

@@ -13,6 +13,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
 import { D2NewContainer } from "../../domain/entities/D2NewContainer";
+import { Team } from "../../domain/entities/Team";
 
 interface ContainerFormProps {
     onSave(data: D2NewContainer): Promise<void>;
@@ -24,6 +25,7 @@ const initialData: D2NewContainer = {
     dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
     coreInstance: "eyeseetea/dhis2-core:2.32",
     port: 8090,
+    teamIds: [1],
 };
 
 const urlMappings: Record<string, number> = {
@@ -31,8 +33,6 @@ const urlMappings: Record<string, number> = {
     "http://localhost:8091": 8091,
     "http://localhost:8092": 8092,
 };
-
-const urlFromPort = _.invert(urlMappings);
 
 const useStyles = makeStyles(theme => ({
     formContainer: {
@@ -47,6 +47,7 @@ const useStyles = makeStyles(theme => ({
     },
     formControl: {
         marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
         minWidth: 120,
     },
 }));
@@ -56,6 +57,7 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
     const classes = useStyles();
     const [data, setData] = React.useState(initialData);
     const [isSaving, setIsSaving] = React.useState(false);
+    const [teams, setTeams] = React.useState<Team[] | undefined>();
 
     const create = React.useCallback(() => {
         setIsSaving(true);
@@ -85,22 +87,45 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
                     value={data.coreInstance}
                 />
 
-                <FormControl className={classes.formControl}>
-                    <FormHelperText>{i18n.t("URL")}</FormHelperText>
+                <div>
+                    <FormControl className={classes.formControl}>
+                        <FormHelperText>{i18n.t("URL")}</FormHelperText>
 
-                    <Select
-                        value={data.port}
-                        onChange={ev => {
-                            setData({ ...data, port: parseInt(ev.target.value as string) });
-                        }}
-                    >
-                        {_.map(urlMappings, (port, url) => (
-                            <MenuItem key={url} value={port}>
-                                {url}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                        <Select
+                            value={data.port}
+                            onChange={ev => {
+                                setData({ ...data, port: parseInt(ev.target.value as string) });
+                            }}
+                        >
+                            {_.map(urlMappings, (port, url) => (
+                                <MenuItem key={url} value={port}>
+                                    {url}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </div>
+
+                {teams && (
+                    <div>
+                        <FormControl className={classes.formControl}>
+                            <FormHelperText>{i18n.t("Teams with access")}</FormHelperText>
+
+                            <Select
+                                value={data.port}
+                                onChange={ev => {
+                                    setData({ ...data, port: parseInt(ev.target.value as string) });
+                                }}
+                            >
+                                {_.map(urlMappings, (port, url) => (
+                                    <MenuItem key={url} value={port}>
+                                        {url}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </div>
+                )}
 
                 <div className={classes.buttonContainer}>
                     <div>

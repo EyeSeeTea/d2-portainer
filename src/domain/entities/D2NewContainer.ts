@@ -3,4 +3,5 @@ export interface D2NewContainer {
     dataInstance: string;
     coreInstance: string;
     port: number;
+    teamIds: number[];
 }

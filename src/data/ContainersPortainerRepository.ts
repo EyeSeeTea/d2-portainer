@@ -1,8 +1,11 @@
 import { D2NewContainer } from "./../domain/entities/D2NewContainer";
-import { ContainerApi, NewStackApi } from "./PortainerApiTypes";
+import { ContainerApi, PostStackRequest, Permission } from "./PortainerApiTypes";
 import _ from "lodash";
 import { D2Container } from "./../domain/entities/D2Container";
-import { ContainersRepository } from "./../domain/repositories/ContainersRepository";
+import {
+    ContainersRepository,
+    D2ContainerStats,
+} from "./../domain/repositories/ContainersRepository";
 import { User } from "./../domain/entities/User";
 import { PortainerApi } from "./PortainerApi";
 import { StringEither, Either } from "../utils/Either";
@@ -13,7 +16,7 @@ export class ContainersPortainerRepository implements ContainersRepository {
     async stop(d2Container: D2Container): Promise<StringEither<void>> {
         const { baseUrl, user } = this.options;
         const api = new PortainerApi({ baseUrl, token: user.token });
-        for (const container of d2Container.containers) {
+        for (const container of _.values(d2Container.containers)) {
             const res = await api.stopContainer(container.id);
             if (res.isFailure()) return res;
         }
@@ -23,7 +26,7 @@ export class ContainersPortainerRepository implements ContainersRepository {
     async start(d2Container: D2Container): Promise<StringEither<void>> {
         const { baseUrl, user } = this.options;
         const api = new PortainerApi({ baseUrl, token: user.token });
-        for (const container of d2Container.containers) {
+        for (const container of _.values(d2Container.containers)) {
             const res = await api.startContainer(container.id);
             if (res.isFailure()) return res;
         }
@@ -34,7 +37,7 @@ export class ContainersPortainerRepository implements ContainersRepository {
         const { baseUrl, user } = this.options;
         const api = new PortainerApi({ baseUrl, token: user.token });
         const name = "d2-docker" + d2NewContainer.dataInstance.replace(/dhis2-data/, "");
-        const newStackApi: NewStackApi = {
+        const newStackApi: PostStackRequest = {
             Name: name,
             RepositoryURL: "https://github.com/tokland/tests",
             RepositoryReferenceName: "refs/heads/master",
@@ -46,7 +49,29 @@ export class ContainersPortainerRepository implements ContainersRepository {
             ],
         };
 
-        return api.createStack(d2NewContainer.endpointId, newStackApi);
+        const res = await api.createStack(d2NewContainer.endpointId, newStackApi);
+
+        return res.match({
+            error: msg => Promise.resolve(Either.error(msg)),
+            success: res => {
+                const permission: Permission = {
+                    AdministratorsOnly: false,
+                    Public: false,
+                    Users: [],
+                    Teams: d2NewContainer.teamIds,
+                };
+
+                return api.setPermission(res.ResourceControl.Id, permission);
+            },
+        });
+    }
+
+    getStatsUrls(d2Container: D2Container): D2ContainerStats {
+        const { baseUrl } = this.options;
+        return _.mapValues(
+            d2Container.containers,
+            container => `${baseUrl}/#/containers/${container.id}/stats`
+        );
     }
 
     async get(options: { endpointId: number }): Promise<StringEither<D2Container[]>> {
@@ -59,36 +84,42 @@ export class ContainersPortainerRepository implements ContainersRepository {
                 all: true,
             })
         ).map(apiContainers => {
-            console.log(apiContainers);
             const groups = _(apiContainers)
                 .filter(c => !!c.Labels["com.eyeseetea.image-name"])
                 .groupBy(c => c.Labels["com.eyeseetea.image-name"])
                 .value();
-            console.log(groups);
 
-            return _.map(groups, (apiContainersForGroup, groupName) => {
-                console.log(apiContainersForGroup.map(c => c.State));
-                const state = _(apiContainersForGroup).every(c => c.State === "running")
-                    ? "running"
-                    : "stopped";
-
-                const coreContainer = apiContainersForGroup.find(
-                    c => !!c.Image.match(/dhis2-core/)
+            const d2Containers = _.map(groups, (apiContainersForGroup, groupName) => {
+                const containersByService = _.keyBy(
+                    apiContainersForGroup,
+                    c => c.Labels["com.docker.compose.service"]
                 );
 
-                const containers = apiContainersForGroup.map(c => ({ id: c.Id, image: c.Image }));
+                const containers = {
+                    core: containersByService["core"],
+                    gateway: containersByService["gateway"],
+                    db: containersByService["db"],
+                };
+
+                if (!_.every(containers)) return;
+
+                const state = _(containers).some(c => c.State === "running")
+                    ? "running"
+                    : "stopped";
 
                 const d2Container: D2Container = {
                     id: groupName,
                     name: groupName,
-                    port: coreContainer?.Ports[0]?.PrivatePort,
+                    port: containers.core.Ports[0]?.PrivatePort,
                     state,
-                    status: coreContainer?.Status || "Unknown",
-                    containers,
+                    status: containers.core.Status || "Unknown",
+                    containers: _.mapValues(containers, c => ({ id: c.Id, image: c.Image })),
                 };
 
                 return d2Container;
             });
+
+            return _.compact(d2Containers);
         });
     }
 }
