@@ -19,10 +19,10 @@ interface StackFormProps {
 }
 
 const initialData: D2NewStack = {
-    branch: "",
+    branch: "master",
     dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
     coreInstance: "eyeseetea/dhis2-core:2.32",
-    port: 8090,
+    port: 8081,
     access: "restricted",
     teamIds: [],
 };

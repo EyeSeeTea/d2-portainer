@@ -128,11 +128,17 @@ export class PortainerApi {
     }
 
     async startContainer(containerId: string): Promise<ApiRes<void>> {
-        return this.request("POST", `/endpoints/1/docker/containers/${containerId}/start`);
+        return this.request(
+            "POST",
+            `/endpoints/${this.endpointId}/docker/containers/${containerId}/start`
+        );
     }
 
     async stopContainer(containerId: string): Promise<ApiRes<void>> {
-        return this.request("POST", `/endpoints/1/docker/containers/${containerId}/stop`);
+        return this.request(
+            "POST",
+            `/endpoints/${this.endpointId}/docker/containers/${containerId}/stop`
+        );
     }
 
     async getStacks(): Promise<ApiRes<Stack[]>> {

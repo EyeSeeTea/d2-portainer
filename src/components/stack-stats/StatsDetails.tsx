@@ -37,7 +37,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
             if (isLoginPage) {
                 const { localStorage } = iframe.contentWindow;
                 localStorage["portainer.JWT"] = JSON.stringify(currentUser.token);
-                localStorage["portainer.ENDPOINT_ID"] = 1;
+                localStorage["portainer.ENDPOINT_ID"] = JSON.stringify(currentUser.endpointId);
                 iframe.contentWindow.location.replace(url);
             } else {
                 on(idocument.querySelector("#sideview"), el => el.remove());

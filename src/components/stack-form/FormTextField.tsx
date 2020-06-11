@@ -17,7 +17,7 @@ export const FormTextField: React.FC<FormTextFieldProps> = React.memo(props => {
             fullWidth
             autoFocus
             label={label}
-            onChange={ev => ev.currentTarget.value as string}
+            onChange={ev => onChange(ev.currentTarget.value as string)}
             value={value}
         />
     );
