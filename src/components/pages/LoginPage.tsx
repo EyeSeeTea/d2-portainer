@@ -6,7 +6,7 @@ import TextField from "@material-ui/core/TextField";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import Container from "@material-ui/core/Container";
+import MuiContainer from "@material-ui/core/Container";
 
 import { useAppContext } from "../AppContext";
 import { UserSession } from "../../domain/entities/UserSession";
@@ -69,17 +69,17 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
             );
             login.match({ success: setUserSession, error: setError });
         }
-    }, [compositionRoot, username, password, setUserSession]);
+    }, [compositionRoot, username, password, setUserSession, fieldsFilled]);
 
     const loginIfEnter = React.useCallback(
         (ev: React.KeyboardEvent<HTMLDivElement>) => {
             if (ev.key === "Enter" && fieldsFilled) login();
         },
-        [login]
+        [login, fieldsFilled]
     );
 
     return (
-        <Container component="main" maxWidth="xs">
+        <MuiContainer component="main" maxWidth="xs">
             <CssBaseline />
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
@@ -140,6 +140,6 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                     </Grow>
                 </div>
             </div>
-        </Container>
+        </MuiContainer>
     );
 });

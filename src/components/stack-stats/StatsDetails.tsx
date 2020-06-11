@@ -49,7 +49,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                 on(idocument.querySelector(".row.ng-scope"), el => el.remove());
             }
         }
-    }, []);
+    }, [currentUser.token, url]);
 
     return (
         <ExpansionPanel className={classes.panel} defaultExpanded={initialOpen}>
@@ -59,6 +59,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
 
             <ExpansionPanelDetails>
                 <iframe
+                    title={title}
                     ref={iframeRef}
                     src={url}
                     width="100%"

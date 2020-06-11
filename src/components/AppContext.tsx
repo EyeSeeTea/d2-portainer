@@ -1,7 +1,6 @@
 import React from "react";
 import { CompositionRoot } from "../CompositionRoot";
 import { UserSession } from "../domain/entities/UserSession";
-import { PortainerApi } from "../data/PortainerApi";
 
 export const AppContext = React.createContext<AppContextValue | undefined>(undefined);
 

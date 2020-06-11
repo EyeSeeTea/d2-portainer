@@ -3,31 +3,34 @@ import { i18n } from "../../../i18n";
 import { ConfirmationDialog, useSnackbar } from "d2-ui-components";
 import { useHistory } from "react-router-dom";
 import PageHeader from "../../page-header/PageHeader";
-import { ContainerForm } from "../../container-form/ContainerForm";
-import { D2NewContainer } from "../../../domain/entities/D2NewContainer";
+import { StackForm } from "../../stack-form/StackForm";
+import { D2NewStack } from "../../../domain/entities/D2NewStack";
 import { useAppContext } from "../../AppContext";
 
-interface NewContainerPageProps {}
+interface NewStackPageProps {}
 
-export const NewContainerPage: React.FC<NewContainerPageProps> = React.memo(() => {
+export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const history = useHistory();
     const { compositionRoot } = useAppContext();
     const snackbar = useSnackbar();
     const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
-    const title = i18n.t("Create new D2-Docker container");
+    const title = i18n.t("Create new D2-Docker stack");
     const goToList = React.useCallback(() => history.push("/"), [history]);
 
-    const save = React.useCallback((data: D2NewContainer) => {
-        return compositionRoot.containers.create(data).then(res =>
-            res.match({
-                success: () => {
-                    snackbar.success(i18n.t("D2Docker instance created"));
-                    goToList();
-                },
-                error: snackbar.error,
-            })
-        );
-    }, []);
+    const save = React.useCallback(
+        (data: D2NewStack) => {
+            return compositionRoot.stacks.create(data).then(res =>
+                res.match({
+                    success: () => {
+                        snackbar.success(i18n.t("D2Docker instance created"));
+                        goToList();
+                    },
+                    error: snackbar.error,
+                })
+            );
+        },
+        [compositionRoot, snackbar, goToList]
+    );
 
     return (
         <React.Fragment>
@@ -46,7 +49,7 @@ export const NewContainerPage: React.FC<NewContainerPageProps> = React.memo(() =
                 helpText={undefined}
             />
 
-            <ContainerForm onSave={save} onCancelRequest={() => setCloseDialogOpen(true)} />
+            <StackForm onSave={save} onCancelRequest={() => setCloseDialogOpen(true)} />
         </React.Fragment>
     );
 });

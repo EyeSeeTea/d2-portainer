@@ -1,5 +1,4 @@
 import React from "react";
-import _ from "lodash";
 import {
     Card,
     TextField,
@@ -12,15 +11,16 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
-import { D2NewContainer } from "../../domain/entities/D2NewContainer";
+import { D2NewStack } from "../../domain/entities/D2NewStack";
 import { Team } from "../../domain/entities/Team";
+import config from "../../config";
 
-interface ContainerFormProps {
-    onSave(data: D2NewContainer): Promise<void>;
+interface StackFormProps {
+    onSave(data: D2NewStack): Promise<void>;
     onCancelRequest(): void;
 }
 
-const initialData: D2NewContainer = {
+const initialData: D2NewStack = {
     endpointId: 1,
     dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
     coreInstance: "eyeseetea/dhis2-core:2.32",
@@ -28,36 +28,11 @@ const initialData: D2NewContainer = {
     teamIds: [],
 };
 
-const urlMappings: Array<{ url: string; port: number }> = [
-    { url: "http://localhost:8090", port: 8090 },
-    { url: "http://localhost:8091", port: 8091 },
-    { url: "http://localhost:8092", port: 8092 },
-];
-
-const useStyles = makeStyles(theme => ({
-    formContainer: {
-        paddingRight: 70,
-        paddingLeft: 70,
-        paddingBottom: 30,
-    },
-    buttonContainer: {
-        display: "flex",
-        justifyContent: "space-between",
-        paddingTop: 30,
-    },
-    formControl: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        minWidth: 120,
-    },
-}));
-
-export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
+export const StackForm: React.FC<StackFormProps> = React.memo(props => {
     const { onSave, onCancelRequest } = props;
     const classes = useStyles();
     const [data, setData] = React.useState(initialData);
     const [isSaving, setIsSaving] = React.useState(false);
-    // const [teams, setTeams] = React.useState<Team[] | undefined>();
     const teams: Team[] = [
         { id: 1, name: "samaritans" },
         { id: 2, name: "who" },
@@ -66,11 +41,11 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
     const create = React.useCallback(() => {
         setIsSaving(true);
         onSave(data).finally(() => setIsSaving(false));
-    }, [data]);
+    }, [data, onSave]);
 
     return (
         <Card>
-            <CardContent className={classes.formContainer}>
+            <CardContent className={classes.form}>
                 <TextField
                     margin="normal"
                     required
@@ -101,7 +76,7 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
                                 setData({ ...data, port: parseInt(ev.target.value as string) });
                             }}
                         >
-                            {urlMappings.map(urlMapping => (
+                            {config.urlMappings.map(urlMapping => (
                                 <MenuItem key={urlMapping.port} value={urlMapping.port}>
                                     {urlMapping.url}
                                 </MenuItem>
@@ -135,7 +110,7 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
                     </div>
                 )}
 
-                <div className={classes.buttonContainer}>
+                <div className={classes.button}>
                     <div>
                         <FormButton
                             label={i18n.t("Create")}
@@ -149,3 +124,21 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
         </Card>
     );
 });
+
+const useStyles = makeStyles(theme => ({
+    form: {
+        paddingRight: 70,
+        paddingLeft: 70,
+        paddingBottom: 30,
+    },
+    button: {
+        display: "flex",
+        justifyContent: "space-between",
+        paddingTop: 30,
+    },
+    formControl: {
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        minWidth: 120,
+    },
+}));

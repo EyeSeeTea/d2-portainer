@@ -84,15 +84,6 @@ export interface PostStackResponse {
     ResourceControl: {
         Id: number;
         ResourceId: string;
-        /*
-        SubResourceIds: [];
-        Type: number;
-        UserAccesses: [{ UserId: 1; AccessLevel: 1 }];
-        TeamAccesses: [];
-        Public: false;
-        AdministratorsOnly: false;
-        System: false;
-        */
     };
     ProjectPath: string;
 }

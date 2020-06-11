@@ -32,7 +32,7 @@ export class PortainerApi {
     }
 
     private getLoggedInData() {
-        if (this.state.type != "logged") {
+        if (this.state.type !== "logged") {
             throw new Error("Not logged in");
         } else {
             return this.state;

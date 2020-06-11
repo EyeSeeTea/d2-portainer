@@ -1,37 +1,35 @@
 import React from "react";
 import { useLoggedAppContext } from "../AppContext";
-import { D2Container } from "../../domain/entities/D2Container";
-import { ContainersList } from "../containers-list/ContainersList";
+import { D2Stack } from "../../domain/entities/D2Stack";
+import { StacksList } from "../stacks-list/StacksList";
 import { i18n } from "../../i18n";
 import { useSnackbar } from "d2-ui-components";
 import { HashRouter, Route, Switch } from "react-router-dom";
-import { NewContainerPage } from "./new-container/NewContainerPage";
-
-const endpointId = 1;
+import { NewStackPage } from "./new-stack/NewStackPage";
 
 interface RootPageProps {
     logout: () => void;
 }
 
-const refreshRate = 10;
+// const refreshRate = 10;
 
 export const RootPage: React.FC<RootPageProps> = React.memo(props => {
     const { logout } = props;
     const { compositionRoot, userSession: currentUser } = useLoggedAppContext();
-    const [containers, setContainers] = React.useState<D2Container[]>([]);
+    const [stacks, setStacks] = React.useState<D2Stack[]>([]);
     const snackbar = useSnackbar();
 
-    const getContainers = React.useCallback(() => {
-        compositionRoot.containers.get({ endpointId }).then(res => {
-            res.match({ success: setContainers, error: error => snackbar.error(error) });
+    const getStacks = React.useCallback(() => {
+        compositionRoot.stacks.get().then(res => {
+            res.match({ success: setStacks, error: error => snackbar.error(error) });
         });
-    }, [compositionRoot]);
+    }, [compositionRoot, snackbar]);
 
     React.useEffect(() => {
-        getContainers();
-        //const intervalId = setInterval(getContainers, refreshRate * 1000);
+        getStacks();
+        //const intervalId = setInterval(getStacks, refreshRate * 1000);
         //return () => clearInterval(intervalId);
-    }, [getContainers]);
+    }, [getStacks]);
 
     return (
         <div>
@@ -45,12 +43,8 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
 
             <HashRouter>
                 <Switch>
-                    <Route path="/new" render={() => <NewContainerPage />} />
-                    <Route
-                        render={() => (
-                            <ContainersList containers={containers} onRefresh={getContainers} />
-                        )}
-                    />
+                    <Route path="/new" render={() => <NewStackPage />} />
+                    <Route render={() => <StacksList stacks={stacks} onRefresh={getStacks} />} />
                 </Switch>
             </HashRouter>
         </div>

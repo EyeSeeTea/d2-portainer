@@ -30,26 +30,25 @@ const App: React.FC<AppProps> = React.memo(props => {
                 setUserSession(null);
             }
         },
-        [setUserSession]
+        [setUserSession, compositionRoot]
     );
     React.useEffect(() => {
         const userSession = compositionRoot.session.load();
         reloadSession(userSession);
-    }, [reloadSession]);
+    }, [reloadSession, compositionRoot]);
 
     const setUserSessionAndPersist = React.useCallback(
         userSession => {
-            //setUserSession(userSession);
             compositionRoot.session.store(userSession);
             reloadSession(userSession);
         },
-        [compositionRoot, setUserSession]
+        [compositionRoot, reloadSession]
     );
 
     const logout = React.useCallback(() => {
         compositionRoot.session.store(undefined);
         reloadSession(undefined);
-    }, [compositionRoot, setUserSession]);
+    }, [compositionRoot, reloadSession]);
 
     if (userSession === undefined) return null;
 

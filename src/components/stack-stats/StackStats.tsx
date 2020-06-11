@@ -1,22 +1,22 @@
 import React from "react";
 import { ConfirmationDialog } from "d2-ui-components";
 import { i18n } from "../../i18n";
-import { D2Container } from "../../domain/entities/D2Container";
+import { D2Stack } from "../../domain/entities/D2Stack";
 import { useLoggedAppContext } from "../AppContext";
 import { makeStyles } from "@material-ui/core";
 import { StatsDetails } from "./StatsDetails";
 
-interface ContainersStatsProps {
-    d2Container: D2Container;
+interface StackStatsProps {
+    stack: D2Stack;
     onClose: () => void;
 }
 
-export const ContainersStats: React.FC<ContainersStatsProps> = React.memo(props => {
-    const { d2Container, onClose } = props;
+export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
+    const { stack, onClose } = props;
     const { compositionRoot } = useLoggedAppContext();
     const classes = useStyles();
-    const title = i18n.t("Stats: ") + d2Container.name;
-    const stats = compositionRoot.containers.getStats(d2Container);
+    const title = i18n.t("Stats: ") + stack.name;
+    const stats = compositionRoot.stacks.getStats(stack);
 
     return (
         <ConfirmationDialog

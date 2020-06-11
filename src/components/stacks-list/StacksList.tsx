@@ -16,72 +16,66 @@ import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import StopIcon from "@material-ui/icons/Stop";
 import EqualizerIcon from "@material-ui/icons/Equalizer";
 import SyncIcon from "@material-ui/icons/Sync";
-import { D2Container, D2ContainerMethods } from "../../domain/entities/D2Container";
+import { D2Stack, D2StackMethods } from "../../domain/entities/D2Stack";
 
 import { i18n } from "../../i18n";
 import { useHistory } from "react-router-dom";
-import { useAppContext, useLoggedAppContext } from "../AppContext";
-import { ContainersStats } from "../containers-stats/ContainersStats";
+import { useLoggedAppContext } from "../AppContext";
 import { StringEither } from "../../utils/Either";
+import { StackStats } from "../stack-stats/StackStats";
 
-interface ContainersListProps {
-    containers: D2Container[];
+interface StacksListProps {
+    stacks: D2Stack[];
     onRefresh: () => void;
 }
 
-export const ContainersList: React.FC<ContainersListProps> = React.memo(props => {
-    const { containers, onRefresh } = props;
+export const StacksList: React.FC<StacksListProps> = React.memo(props => {
+    const { stacks, onRefresh } = props;
 
     const { compositionRoot } = useLoggedAppContext();
-    const [rows, setRows] = React.useState<D2Container[]>([]);
+    const [rows, setRows] = React.useState<D2Stack[]>([]);
     const [search, setSearch] = React.useState<string>("");
-    const [stats, setStats] = React.useState<D2Container | undefined>();
+    const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
     const history = useHistory();
     const snackbar = useSnackbar();
 
-    /*
     React.useEffect(() => {
-        containers.length && setStats(containers[0]);
-    }, [containers]);
-    */
-
-    React.useEffect(() => {
-        setRows(D2ContainerMethods.filterContainers(containers, search));
-    }, [search, containers]);
+        setRows(D2StackMethods.filterStacks(stacks, search));
+    }, [search, stacks]);
 
     const stop = React.useCallback(
         (ids: string[]) => {
-            const d2Containers = D2ContainerMethods.getById(containers, ids);
+            const stacksToStop = D2StackMethods.getById(stacks, ids);
             showFeedback(
-                compositionRoot.containers.stop(d2Containers),
+                compositionRoot.stacks.stop(stacksToStop),
                 snackbar,
-                i18n.t("Containers stopped")
+                i18n.t("Stack(s) stopped")
             );
         },
-        [compositionRoot, containers]
+        [compositionRoot, stacks, snackbar]
     );
 
     const start = React.useCallback(
         (ids: string[]) => {
-            const d2Containers = D2ContainerMethods.getById(containers, ids);
+            const stacksToStart = D2StackMethods.getById(stacks, ids);
             showFeedback(
-                compositionRoot.containers.start(d2Containers),
+                compositionRoot.stacks.start(stacksToStart),
                 snackbar,
-                i18n.t("Containers started")
+                i18n.t("Stack(s) started")
             );
         },
-        [compositionRoot, containers]
+        [compositionRoot, stacks, snackbar]
     );
 
     const globalActions: TableGlobalAction[] = React.useMemo(
         () => [
             { name: "refresh", text: i18n.t("Refresh"), icon: <SyncIcon />, onClick: onRefresh },
         ],
-        []
+        [onRefresh]
     );
 
-    const actions: TableAction<D2Container>[] = React.useMemo(
+    const actions: TableAction<D2Stack>[] = React.useMemo(
         () => [
             {
                 name: "details",
@@ -93,9 +87,9 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 name: "stats",
                 text: i18n.t("Stats"),
                 multiple: false,
-                onClick: ids => setStats(D2ContainerMethods.getById(containers, ids)[0]),
+                onClick: ids => setStackStats(D2StackMethods.getById(stacks, ids)[0]),
                 icon: <EqualizerIcon />,
-                isActive: D2ContainerMethods.isRunning,
+                isActive: D2StackMethods.isRunning,
             },
             {
                 name: "start",
@@ -103,7 +97,7 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 multiple: true,
                 onClick: start,
                 icon: <PlayArrowIcon />,
-                isActive: D2ContainerMethods.isStopped,
+                isActive: D2StackMethods.isStopped,
             },
             {
                 name: "stop",
@@ -111,7 +105,7 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 multiple: true,
                 onClick: stop,
                 icon: <StopIcon />,
-                isActive: D2ContainerMethods.isRunning,
+                isActive: D2StackMethods.isRunning,
             },
             {
                 name: "edit",
@@ -128,27 +122,27 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
                 icon: <DeleteIcon />,
             },
         ],
-        [stop, setStats]
+        [stop, setStackStats, stacks, start]
     );
 
     const updateTable = React.useCallback(
-        (state: TableState<D2Container>) => setSelection(state.selection),
+        (state: TableState<D2Stack>) => setSelection(state.selection),
         [setSelection]
     );
 
     const createInstance = React.useCallback(() => {
         history.push("/new");
-    }, []);
+    }, [history]);
 
     const closeStats = React.useCallback(() => {
-        setStats(undefined);
-    }, [setStats]);
+        setStackStats(undefined);
+    }, [setStackStats]);
 
     return (
         <React.Fragment>
-            {stats && <ContainersStats d2Container={stats} onClose={closeStats} />}
+            {stackStats && <StackStats stack={stackStats} onClose={closeStats} />}
 
-            <ObjectsTable<D2Container>
+            <ObjectsTable<D2Stack>
                 rows={rows}
                 columns={columns}
                 details={details}
@@ -163,7 +157,7 @@ export const ContainersList: React.FC<ContainersListProps> = React.memo(props =>
     );
 });
 
-const columns: TableColumn<D2Container>[] = [
+const columns: TableColumn<D2Stack>[] = [
     { name: "name" as const, text: i18n.t("Name"), sortable: true },
     { name: "state" as const, text: i18n.t("State"), sortable: true },
     {
@@ -175,7 +169,7 @@ const columns: TableColumn<D2Container>[] = [
     { name: "status" as const, text: i18n.t("Status"), sortable: false },
 ];
 
-const details: ObjectsTableDetailField<D2Container>[] = columns.map(column => ({
+const details: ObjectsTableDetailField<D2Stack>[] = columns.map(column => ({
     name: column.name,
     text: column.text,
 }));
