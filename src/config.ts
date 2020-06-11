@@ -1,9 +1,10 @@
 const config = {
     appName: "WHO D2 Portainer",
     endpointName: "local",
-    repository: {
+    dockerComposeRepository: {
         url: "http://github.com/tokland/d2-portainer-config",
         path: "docker-compose.yml",
+        // Branch: urlMapping.name
     },
     urlMappings: [
         { url: "http://localhost:8080/dhis2", port: 8080, name: "local-dhis2" },

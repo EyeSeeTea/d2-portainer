@@ -1,19 +1,17 @@
 import React from "react";
-import {
-    Card,
-    TextField,
-    CardContent,
-    Select,
-    MenuItem,
-    FormControl,
-    FormHelperText,
-} from "@material-ui/core";
+import _ from "lodash";
+import { Card, CardContent, FormControl, FormHelperText } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
 import { D2NewStack } from "../../domain/entities/D2NewStack";
 import { Team } from "../../domain/entities/Team";
 import config from "../../config";
+import { FormTextField } from "./FormTextField";
+import { FormSelectField, Option } from "./FormSelectField";
+import { FormMultipleSelectField } from "./FormMultipleSelectField";
+import { useLoggedAppContext } from "../AppContext";
+import { useSnackbar } from "d2-ui-components";
 
 interface StackFormProps {
     onSave(data: D2NewStack): Promise<void>;
@@ -21,22 +19,47 @@ interface StackFormProps {
 }
 
 const initialData: D2NewStack = {
-    endpointId: 1,
+    branch: "",
     dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
     coreInstance: "eyeseetea/dhis2-core:2.32",
     port: 8090,
+    access: "restricted",
     teamIds: [],
 };
+
+const accesses = [
+    { value: "restricted", label: i18n.t("Restricted") },
+    { value: "admins", label: i18n.t("Administrators") },
+];
+
+const urlMappingOptions = config.urlMappings.map(mapping => ({
+    value: mapping.port.toString(),
+    label: mapping.url,
+}));
+
+const branchFromPort = _(config.urlMappings)
+    .map(mapping => [mapping.port, mapping.name])
+    .fromPairs()
+    .value();
 
 export const StackForm: React.FC<StackFormProps> = React.memo(props => {
     const { onSave, onCancelRequest } = props;
     const classes = useStyles();
+    const { compositionRoot } = useLoggedAppContext();
     const [data, setData] = React.useState(initialData);
     const [isSaving, setIsSaving] = React.useState(false);
-    const teams: Team[] = [
-        { id: 1, name: "samaritans" },
-        { id: 2, name: "who" },
-    ];
+    const snackbar = useSnackbar();
+    const [teams, setTeams] = React.useState<Option[]>([]);
+
+    React.useEffect(() => {
+        compositionRoot.teams.get().then(res => {
+            res.match({
+                success: (teams: Team[]) =>
+                    setTeams(teams.map(t => ({ value: t.id.toString(), label: t.name }))),
+                error: snackbar.error,
+            });
+        });
+    }, [snackbar]);
 
     const create = React.useCallback(() => {
         setIsSaving(true);
@@ -46,68 +69,43 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
     return (
         <Card>
             <CardContent className={classes.form}>
-                <TextField
-                    margin="normal"
-                    required
-                    fullWidth
+                <FormTextField
                     label={i18n.t("Data instance")}
-                    autoFocus
-                    onChange={ev => setData({ ...data, dataInstance: ev.currentTarget.value })}
+                    onChange={value => setData({ ...data, dataInstance: value })}
                     value={data.dataInstance}
                 />
 
-                <TextField
-                    margin="normal"
-                    required
-                    fullWidth
+                <FormTextField
                     label={i18n.t("Core instance")}
-                    autoFocus
-                    onChange={ev => setData({ ...data, coreInstance: ev.currentTarget.value })}
+                    onChange={value => setData({ ...data, coreInstance: value })}
                     value={data.coreInstance}
                 />
 
-                <div>
-                    <FormControl className={classes.formControl} fullWidth>
-                        <FormHelperText>{i18n.t("URL")}</FormHelperText>
+                <FormSelectField
+                    label={i18n.t("URL")}
+                    onChange={port =>
+                        setData({ ...data, port: parseInt(port), branch: branchFromPort[port] })
+                    }
+                    options={urlMappingOptions}
+                    value={data.port.toString()}
+                />
 
-                        <Select
-                            value={data.port}
-                            onChange={ev => {
-                                setData({ ...data, port: parseInt(ev.target.value as string) });
-                            }}
-                        >
-                            {config.urlMappings.map(urlMapping => (
-                                <MenuItem key={urlMapping.port} value={urlMapping.port}>
-                                    {urlMapping.url}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </div>
+                <FormSelectField
+                    label={i18n.t("Access")}
+                    onChange={(access: D2NewStack["access"]) => setData({ ...data, access })}
+                    options={accesses}
+                    value={data.access as string}
+                />
 
-                {teams && (
-                    <div>
-                        <FormControl className={classes.formControl} fullWidth>
-                            <FormHelperText>{i18n.t("Teams with access")}</FormHelperText>
-
-                            <Select
-                                value={data.teamIds}
-                                multiple={true}
-                                onChange={ev => {
-                                    setData({
-                                        ...data,
-                                        teamIds: ev.target.value as number[],
-                                    });
-                                }}
-                            >
-                                {teams.map(team => (
-                                    <MenuItem key={team.id} value={team.id}>
-                                        {team.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </div>
+                {data.access === "restricted" && (
+                    <FormMultipleSelectField
+                        label={i18n.t("Teams with access")}
+                        onChange={teamIds =>
+                            setData({ ...data, teamIds: teamIds.map(s => parseInt(s)) })
+                        }
+                        options={teams}
+                        values={data.teamIds.map(id => id.toString())}
+                    />
                 )}
 
                 <div className={classes.button}>

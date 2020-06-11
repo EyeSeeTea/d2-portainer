@@ -1,4 +1,4 @@
-export interface ContainerApi {
+export interface Container {
     Command: string;
     Created: number;
     HostConfig: HostConfig;
@@ -12,6 +12,13 @@ export interface ContainerApi {
     Ports: Port[];
     State: State;
     Status: string;
+}
+
+export interface Stack {
+    Id: number;
+    Name: string;
+    Type: number;
+    EndpointId: number;
 }
 
 type State = "created" | "exited" | "running";
@@ -99,4 +106,9 @@ export interface Endpoint {
     Id: number;
     Name: "local";
     Type: number;
+}
+
+export interface Team {
+    Id: number;
+    Name: string;
 }

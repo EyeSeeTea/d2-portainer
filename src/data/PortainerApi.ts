@@ -1,13 +1,17 @@
+import { Endpoint } from "./../domain/entities/Endpoint";
 import axios, { AxiosRequestConfig } from "axios";
 import _ from "lodash";
 import { Either, StringEither } from "../utils/Either";
 import {
-    ContainerApi,
+    Container,
     PostStackRequest,
     PostStackResponse,
     Permission,
-    Endpoint,
+    Endpoint as ApiEndpoint,
+    Stack,
+    Team,
 } from "./PortainerApiTypes";
+import { D2Stack } from "../domain/entities/D2Stack";
 
 type Token = string;
 type LoginResponseSuccess = { jwt: Token };
@@ -105,7 +109,7 @@ export class PortainerApi {
 
         if (isSuccessfulLogin(loginResponse)) {
             const token = loginResponse.jwt;
-            const endpointsRes = await this.request<Endpoint[]>("GET", "/endpoints", {}, token);
+            const endpointsRes = await this.request<ApiEndpoint[]>("GET", "/endpoints", {}, token);
             return endpointsRes.flatMap(endpoints => {
                 const endpoint = endpoints.find(endpoint => endpoint.Name === endpointName);
                 if (endpoint) {
@@ -131,6 +135,13 @@ export class PortainerApi {
         return this.request("POST", `/endpoints/1/docker/containers/${containerId}/stop`);
     }
 
+    async getStacks(): Promise<ApiRes<Stack[]>> {
+        const url = `/stacks`;
+        const res = await this.request<Stack[]>("GET", url);
+        const endpointId = this.endpointId;
+        return res.map(allStacks => allStacks.filter(stack => stack.EndpointId === endpointId));
+    }
+
     async createStack(newStackApi: PostStackRequest): Promise<ApiRes<PostStackResponse>> {
         const url = `/stacks?endpointId=${this.endpointId}&method=repository&type=2`;
         return this.request("POST", url, {
@@ -144,10 +155,14 @@ export class PortainerApi {
         });
     }
 
-    async getContainers(options: { all: boolean }): Promise<ApiRes<ContainerApi[]>> {
+    async getContainers(options: { all: boolean }): Promise<ApiRes<Container[]>> {
         return this.request("GET", `/endpoints/${this.endpointId}/docker/containers/json`, {
             params: { all: options.all },
         });
+    }
+
+    async getTeams(): Promise<ApiRes<Team[]>> {
+        return this.request("GET", `/teams`);
     }
 }
 

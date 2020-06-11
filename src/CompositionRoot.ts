@@ -1,3 +1,4 @@
+import { TeamsRepository } from "./domain/repositories/TeamsRepository";
 import { GetDataSourceInfo } from "./domain/usecases/GetDataSourceInfo";
 import { SessionBrowserStorageRepository } from "./data/SessionBrowserStorageRepository";
 import { StartD2Stacks } from "./domain/usecases/StartD2Stacks";
@@ -12,15 +13,19 @@ import { StoreSession } from "./domain/usecases/StoreSession";
 import { SetDataSourceSession } from "./domain/usecases/SetDataSourceSession";
 import { DataSourcePortainerRepository } from "./data/DataSourcePortainerRepository";
 import { D2StacksPortainerRepository } from "./data/D2StacksPortainerRepository";
+import { GetTeams } from "./domain/usecases/GetTeams";
+import { TeamsPortainerRepository } from "./data/TeamsPortainerRepository";
 
 export class CompositionRoot {
     dataSourceRepository: DataSourcePortainerRepository;
     stacksRepository: D2StacksPortainerRepository;
     sessionRepository: SessionBrowserStorageRepository;
+    teamsRepository: TeamsRepository;
 
     constructor(public options: { portainerApi: PortainerApi }) {
         this.dataSourceRepository = new DataSourcePortainerRepository(this.options.portainerApi);
         this.stacksRepository = new D2StacksPortainerRepository(this.options.portainerApi);
+        this.teamsRepository = new TeamsPortainerRepository(this.options.portainerApi);
         this.sessionRepository = new SessionBrowserStorageRepository();
     }
 
@@ -46,6 +51,12 @@ export class CompositionRoot {
         return {
             load: execute(new LoadSession(this.sessionRepository)),
             store: execute(new StoreSession(this.sessionRepository)),
+        };
+    }
+
+    public get teams() {
+        return {
+            get: execute(new GetTeams(this.teamsRepository)),
         };
     }
 }

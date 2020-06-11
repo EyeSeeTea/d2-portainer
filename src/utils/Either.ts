@@ -1,6 +1,9 @@
 type EitherValue<Error, Data> = { type: "error"; error: Error } | { type: "success"; data: Data };
 
-type MatchObject<Error, Data, Res> = { success: (data: Data) => Res; error: (error: Error) => Res };
+type MatchObject<Error, Data, Res> = {
+    success: (data: Data) => Res;
+    error: (error: Error) => Res;
+};
 
 export class Either<Error, Data> {
     constructor(private value: EitherValue<Error, Data>) {}
@@ -14,7 +17,11 @@ export class Either<Error, Data> {
         }
     }
 
-    isFailure(): boolean {
+    getFailure(): Error | undefined {
+        return this.value.type === "error" ? this.value.error : undefined;
+    }
+
+    isFailure() {
         return this.value.type === "error";
     }
 
@@ -33,6 +40,16 @@ export class Either<Error, Data> {
         return this.match({
             success: data => fn(data),
             error: () => this as Either<Error, any>,
+        });
+    }
+
+    static map2<Data1, Data2, Error, Res>(
+        eithers: [Either<Error, Data1>, Either<Error, Data2>],
+        fn: (data1: Data1, data2: Data2) => Res
+    ): Either<Error, Res> {
+        const [either1, either2] = eithers;
+        return either1.flatMap<Res>(data1 => {
+            return either2.map<Res>(data2 => fn(data1, data2));
         });
     }
 

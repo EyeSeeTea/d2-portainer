@@ -5,6 +5,7 @@ import { D2Stack } from "./../domain/entities/D2Stack";
 import { D2StacksRepository, D2StackStats } from "../domain/repositories/D2StacksRepository";
 import { PortainerApi } from "./PortainerApi";
 import { StringEither, Either } from "../utils/Either";
+import config from "../config";
 
 export class D2StacksPortainerRepository implements D2StacksRepository {
     constructor(public api: PortainerApi) {}
@@ -27,11 +28,12 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
 
     async create(d2NewStack: D2NewStack): Promise<StringEither<void>> {
         const name = "d2-docker" + d2NewStack.dataInstance.replace(/dhis2-data/, "");
+        const { dockerComposeRepository: repo } = config;
         const newStackApi: PostStackRequest = {
             Name: name,
-            RepositoryURL: "https://github.com/tokland/tests",
-            RepositoryReferenceName: "refs/heads/master",
-            ComposeFilePathInRepository: "docker-compose.yml",
+            RepositoryURL: repo.url,
+            RepositoryReferenceName: `refs/heads/${d2NewStack.branch}`,
+            ComposeFilePathInRepository: repo.path,
             Env: [
                 { name: "DHIS2_DATA_IMAGE", value: d2NewStack.dataInstance },
                 { name: "DHIS2_CORE_IMAGE", value: d2NewStack.coreInstance },
@@ -65,13 +67,17 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     }
 
     async get(): Promise<StringEither<D2Stack[]>> {
-        return (await this.api.getContainers({ all: true })).map(apiContainers => {
-            const groups = _(apiContainers)
-                .filter(c => !!c.Labels["com.eyeseetea.image-name"])
-                .groupBy(c => c.Labels["com.eyeseetea.image-name"])
-                .value();
+        const [stacksRes, containersRes] = await Promise.all([
+            this.api.getStacks(),
+            this.api.getContainers({ all: true }),
+        ]);
 
-            const stacks = _.map(groups, (apiContainersForGroup, groupName) => {
+        return Either.map2([stacksRes, containersRes], (apiStacks, apiContainers) => {
+            const stacks: Array<D2Stack | undefined> = apiStacks.map(apiStack => {
+                const apiContainersForGroup = _(apiContainers)
+                    .filter(c => c.Labels["com.docker.compose.project"] == apiStack.Name)
+                    .value();
+
                 const containersByService = _.keyBy(
                     apiContainersForGroup,
                     c => c.Labels["com.docker.compose.service"]
@@ -90,8 +96,8 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
                     : "stopped";
 
                 const stack: D2Stack = {
-                    id: groupName,
-                    name: groupName,
+                    id: apiStack.Id.toString(),
+                    name: apiStack.Name,
                     port: containers.core.Ports[0]?.PrivatePort,
                     state,
                     status: containers.core.Status || "Unknown",

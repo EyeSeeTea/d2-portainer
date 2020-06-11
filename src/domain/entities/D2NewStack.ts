@@ -1,7 +1,8 @@
 export interface D2NewStack {
-    endpointId: number;
+    branch: string;
     dataInstance: string;
     coreInstance: string;
     port: number;
+    access: "restricted" | "admin";
     teamIds: number[];
 }
