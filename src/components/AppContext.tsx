@@ -1,29 +1,25 @@
 import React from "react";
 import { CompositionRoot } from "../CompositionRoot";
-import { User } from "../domain/entities/User";
+import { UserSession } from "../domain/entities/UserSession";
+import { PortainerApi } from "../data/PortainerApi";
 
 export const AppContext = React.createContext<AppContextValue | undefined>(undefined);
 
 export interface AppContextValue {
     compositionRoot: CompositionRoot;
-    currentUser?: User;
+    userSession: UserSession | null;
 }
 
-export type AppContextLoggedValue = AppContextValue & { currentUser: User };
+export type AppContextLoggedValue = AppContextValue & { userSession: UserSession };
 
 interface AppContextProps {
-    value: { portainerUrl: string; currentUser?: User };
+    value: AppContextValue;
 }
 
 export const AppContextProvider: React.FC<AppContextProps> = React.memo(props => {
     const { value, children } = props;
-    const { portainerUrl, currentUser } = value;
-    const appContext = React.useMemo(() => {
-        const compositionRoot = new CompositionRoot({ portainerUrl, currentUser });
-        return { compositionRoot, currentUser };
-    }, [portainerUrl, currentUser]);
 
-    return <AppContext.Provider value={appContext}>{children}</AppContext.Provider>;
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 });
 
 export function useAppContext(): AppContextValue {
@@ -36,8 +32,8 @@ export function useLoggedAppContext(): AppContextLoggedValue {
     const appContext = React.useContext(AppContext);
     if (!appContext) throw new Error("Composition root not initialized");
 
-    const { currentUser } = appContext;
-    if (!currentUser) throw new Error("No user logged");
+    const { userSession } = appContext;
+    if (!userSession) throw new Error("No user logged");
 
-    return { ...appContext, currentUser };
+    return { ...appContext, userSession: userSession };
 }

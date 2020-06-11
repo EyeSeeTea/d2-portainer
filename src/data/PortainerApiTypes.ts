@@ -103,3 +103,9 @@ export interface Permission {
     Users: number[];
     Teams: number[];
 }
+
+export interface Endpoint {
+    Id: number;
+    Name: "local";
+    Type: number;
+}

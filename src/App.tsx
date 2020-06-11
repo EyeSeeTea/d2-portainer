@@ -1,9 +1,11 @@
 import React from "react";
 import { AppContextProvider } from "./components/AppContext";
 import { LoginPage } from "./components/pages/LoginPage";
-import { User } from "./domain/entities/User";
+import { UserSession } from "./domain/entities/UserSession";
 import { RootPage } from "./components/pages/RootPage";
 import { SnackbarProvider } from "d2-ui-components";
+import { CompositionRoot } from "./CompositionRoot";
+import { PortainerApi } from "./data/PortainerApi";
 
 interface AppProps {
     portainerUrl: string;
@@ -11,53 +13,59 @@ interface AppProps {
 
 const App: React.FC<AppProps> = React.memo(props => {
     const { portainerUrl } = props;
-    const [currentUser, setCurrentUser] = React.useState<User | undefined>(getUserFromCookie);
-    const value = { portainerUrl, currentUser };
-    const setCurrentUserAndPersist = React.useCallback(
-        user => {
-            setCurrentUser(user);
-            setUserCookie(user);
+
+    const compositionRoot = React.useMemo(() => {
+        const api = new PortainerApi({ baseUrl: portainerUrl });
+        return new CompositionRoot({ portainerApi: api });
+    }, [portainerUrl]);
+
+    const [userSession, setUserSession] = React.useState<UserSession | null | undefined>();
+
+    const reloadSession = React.useCallback(
+        (userSession: UserSession | undefined) => {
+            if (userSession) {
+                compositionRoot.dataSource.session(userSession);
+                setUserSession(userSession);
+            } else {
+                setUserSession(null);
+            }
         },
-        [setCurrentUser]
+        [setUserSession]
+    );
+    React.useEffect(() => {
+        const userSession = compositionRoot.session.load();
+        reloadSession(userSession);
+    }, [reloadSession]);
+
+    const setUserSessionAndPersist = React.useCallback(
+        userSession => {
+            //setUserSession(userSession);
+            compositionRoot.session.store(userSession);
+            reloadSession(userSession);
+        },
+        [compositionRoot, setUserSession]
     );
 
     const logout = React.useCallback(() => {
-        setCurrentUser(undefined);
-        setUserCookie(undefined);
-    }, [setCurrentUser]);
+        compositionRoot.session.store(undefined);
+        reloadSession(undefined);
+    }, [compositionRoot, setUserSession]);
+
+    if (userSession === undefined) return null;
+
+    const value = { compositionRoot, userSession };
 
     return (
         <AppContextProvider value={value}>
             <SnackbarProvider>
-                {currentUser ? (
+                {userSession ? (
                     <RootPage logout={logout} />
                 ) : (
-                    <LoginPage setCurrentUser={setCurrentUserAndPersist} />
+                    <LoginPage setUserSession={setUserSessionAndPersist} />
                 )}
             </SnackbarProvider>
         </AppContextProvider>
     );
 });
-
-const storageUserKey = "user";
-
-function setUserCookie(user: User | undefined) {
-    if (user) {
-        const userJson = JSON.stringify(user);
-        sessionStorage.setItem(storageUserKey, userJson);
-    } else {
-        sessionStorage.removeItem(storageUserKey);
-    }
-}
-
-function getUserFromCookie(): User | undefined {
-    const userJson = sessionStorage.getItem(storageUserKey);
-    if (!userJson) return;
-    try {
-        return JSON.parse(userJson);
-    } catch (e) {
-        return;
-    }
-}
 
 export default React.memo(App);

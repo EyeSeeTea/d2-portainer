@@ -17,7 +17,7 @@ const refreshRate = 10;
 
 export const RootPage: React.FC<RootPageProps> = React.memo(props => {
     const { logout } = props;
-    const { compositionRoot, currentUser } = useLoggedAppContext();
+    const { compositionRoot, userSession: currentUser } = useLoggedAppContext();
     const [containers, setContainers] = React.useState<D2Container[]>([]);
     const snackbar = useSnackbar();
 

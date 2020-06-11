@@ -18,7 +18,7 @@ interface StatsDetailsProps {
 export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
     const { title, url, initialOpen } = props;
     const classes = useStyles();
-    const { currentUser } = useLoggedAppContext();
+    const { userSession: currentUser } = useLoggedAppContext();
     const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
     const login = React.useCallback(() => {

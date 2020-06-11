@@ -9,9 +9,11 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 
 import { useAppContext } from "../AppContext";
-import { User } from "../../domain/entities/User";
+import { UserSession } from "../../domain/entities/UserSession";
 import { i18n } from "../../i18n";
 import { Grow } from "@material-ui/core";
+
+import config from "../../config";
 
 /* From https://react.school/material-ui/templates */
 
@@ -41,11 +43,11 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface LoginPageProps {
-    setCurrentUser: (user: User) => void;
+    setUserSession: (user: UserSession) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
-    const { setCurrentUser } = props;
+    const { setUserSession } = props;
     const { compositionRoot } = useAppContext();
     const classes = useStyles();
     const [username, setUsername] = React.useState("");
@@ -53,14 +55,21 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
     const [error, setError] = React.useState("");
 
     const fieldsFilled = username.trim() && password.trim();
+    const portainerUrl = React.useMemo(() => compositionRoot.dataSource.info().url, [
+        compositionRoot,
+    ]);
 
     const login = React.useCallback(async () => {
         if (fieldsFilled) {
             setError("");
-            const login = await compositionRoot.users.login(username.trim(), password.trim());
-            login.match({ success: setCurrentUser, error: setError });
+            const login = await compositionRoot.dataSource.login(
+                username.trim(),
+                password.trim(),
+                config.endpointName
+            );
+            login.match({ success: setUserSession, error: setError });
         }
-    }, [compositionRoot, username, password, setCurrentUser]);
+    }, [compositionRoot, username, password, setUserSession]);
 
     const loginIfEnter = React.useCallback(
         (ev: React.KeyboardEvent<HTMLDivElement>) => {
@@ -78,7 +87,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                 </Avatar>
 
                 <Typography component="h1" variant="h5">
-                    {i18n.t("Sign in")}
+                    {config.appName} - {i18n.t("Sign in")}
                 </Typography>
 
                 <div className={classes.form}>
@@ -118,6 +127,13 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                     >
                         {i18n.t("Sign In")}
                     </Button>
+
+                    <a
+                        style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+                        href={portainerUrl}
+                    >
+                        {i18n.t("Portainer access")}
+                    </a>
 
                     <Grow in={!!error}>
                         <div className={classes.feedback}>{error}</div>

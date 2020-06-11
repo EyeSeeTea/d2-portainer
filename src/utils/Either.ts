@@ -40,8 +40,8 @@ export class Either<Error, Data> {
         return new Either<Error, never>({ type: "error", error });
     }
 
-    static success<Data>(data: Data) {
-        return new Either<never, Data>({ type: "success", data });
+    static success<Error, Data>(data: Data) {
+        return new Either<Error, Data>({ type: "success", data });
     }
 }
 

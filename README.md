@@ -6,14 +6,16 @@ Control d2-docker containers using portainer
 
 Start a portainer instance on http://localhost:9000 (agent at :8000) with user `admin/123123123`:
 
+TODO: Change to direct portainer
+
 ```
 $ docker run -p 9000:9000 -p 8000:8000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer --admin-password=$(htpasswd -nb -B admin 123123123 | cut -d ":" -f2)
 ```
 
--   Create users
--   Create teams
--   Create endpoint (to local) and assign to teams
--   Registries -> DockerHub: Configure auth
+-   Create users.
+-   Create teams.
+-   Create endpoint (to local) and assign to teams.
+-   Registries -> DockerHub: Configure auth.
 
 ## Nginx
 
@@ -22,7 +24,7 @@ Serve production at http://localhost:9003:
 ```
 http {
     server {
-        listen 9003;
+        listen 9001;
         server_name localhost;
 
         location /portainer/ {

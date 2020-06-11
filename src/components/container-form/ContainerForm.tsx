@@ -25,14 +25,14 @@ const initialData: D2NewContainer = {
     dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
     coreInstance: "eyeseetea/dhis2-core:2.32",
     port: 8090,
-    teamIds: [1],
+    teamIds: [],
 };
 
-const urlMappings: Record<string, number> = {
-    "http://localhost:8090": 8090,
-    "http://localhost:8091": 8091,
-    "http://localhost:8092": 8092,
-};
+const urlMappings: Array<{ url: string; port: number }> = [
+    { url: "http://localhost:8090", port: 8090 },
+    { url: "http://localhost:8091", port: 8091 },
+    { url: "http://localhost:8092", port: 8092 },
+];
 
 const useStyles = makeStyles(theme => ({
     formContainer: {
@@ -57,7 +57,11 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
     const classes = useStyles();
     const [data, setData] = React.useState(initialData);
     const [isSaving, setIsSaving] = React.useState(false);
-    const [teams, setTeams] = React.useState<Team[] | undefined>();
+    // const [teams, setTeams] = React.useState<Team[] | undefined>();
+    const teams: Team[] = [
+        { id: 1, name: "samaritans" },
+        { id: 2, name: "who" },
+    ];
 
     const create = React.useCallback(() => {
         setIsSaving(true);
@@ -88,7 +92,7 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
                 />
 
                 <div>
-                    <FormControl className={classes.formControl}>
+                    <FormControl className={classes.formControl} fullWidth>
                         <FormHelperText>{i18n.t("URL")}</FormHelperText>
 
                         <Select
@@ -97,9 +101,9 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
                                 setData({ ...data, port: parseInt(ev.target.value as string) });
                             }}
                         >
-                            {_.map(urlMappings, (port, url) => (
-                                <MenuItem key={url} value={port}>
-                                    {url}
+                            {urlMappings.map(urlMapping => (
+                                <MenuItem key={urlMapping.port} value={urlMapping.port}>
+                                    {urlMapping.url}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -108,18 +112,22 @@ export const ContainerForm: React.FC<ContainerFormProps> = React.memo(props => {
 
                 {teams && (
                     <div>
-                        <FormControl className={classes.formControl}>
+                        <FormControl className={classes.formControl} fullWidth>
                             <FormHelperText>{i18n.t("Teams with access")}</FormHelperText>
 
                             <Select
-                                value={data.port}
+                                value={data.teamIds}
+                                multiple={true}
                                 onChange={ev => {
-                                    setData({ ...data, port: parseInt(ev.target.value as string) });
+                                    setData({
+                                        ...data,
+                                        teamIds: ev.target.value as number[],
+                                    });
                                 }}
                             >
-                                {_.map(urlMappings, (port, url) => (
-                                    <MenuItem key={url} value={port}>
-                                        {url}
+                                {teams.map(team => (
+                                    <MenuItem key={team.id} value={team.id}>
+                                        {team.name}
                                     </MenuItem>
                                 ))}
                             </Select>
