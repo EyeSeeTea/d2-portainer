@@ -1,6 +1,6 @@
-import { StringEither } from "../../utils/Either";
 import { Team } from "../entities/Team";
+import { PromiseRes } from "../../utils/types";
 
 export interface TeamsRepository {
-    get(): Promise<StringEither<Team[]>>;
+    get(): PromiseRes<Team[]>;
 }

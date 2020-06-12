@@ -1,6 +1,6 @@
 import React from "react";
 import _ from "lodash";
-import { Card, CardContent, FormControl, FormHelperText } from "@material-ui/core";
+import { Card, CardContent } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
@@ -59,7 +59,7 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
                 error: snackbar.error,
             });
         });
-    }, [snackbar]);
+    }, [compositionRoot, snackbar]);
 
     const create = React.useCallback(() => {
         setIsSaving(true);

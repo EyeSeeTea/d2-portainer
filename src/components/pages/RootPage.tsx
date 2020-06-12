@@ -28,7 +28,7 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
     const logoutSession = React.useCallback(() => {
         compositionRoot.dataSource.logout();
         logout();
-    }, [compositionRoot]);
+    }, [compositionRoot, logout]);
 
     React.useEffect(() => {
         getStacks();

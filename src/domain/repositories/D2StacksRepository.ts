@@ -1,12 +1,12 @@
 import { D2NewStack } from "../entities/D2NewStack";
-import { StringEither } from "../../utils/Either";
 import { D2Stack } from "../entities/D2Stack";
+import { PromiseRes } from "../../utils/types";
 
 export interface D2StacksRepository {
-    get(): Promise<StringEither<D2Stack[]>>;
-    start(stack: D2Stack): Promise<StringEither<void>>;
-    stop(stack: D2Stack): Promise<StringEither<void>>;
-    create(newStack: D2NewStack): Promise<StringEither<void>>;
+    get(): PromiseRes<D2Stack[]>;
+    start(stack: D2Stack): PromiseRes<void>;
+    stop(stack: D2Stack): PromiseRes<void>;
+    create(newStack: D2NewStack): PromiseRes<void>;
     getStatsUrls(stack: D2Stack): D2StackStats;
 }
 

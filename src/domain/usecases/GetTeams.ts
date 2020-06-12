@@ -1,13 +1,11 @@
-import { StringEither } from "./../../utils/Either";
 import { TeamsRepository } from "./../repositories/TeamsRepository";
 import { Team } from "../entities/Team";
-
-type Response<T> = Promise<StringEither<T>>;
+import { PromiseRes } from "../../utils/types";
 
 export class GetTeams {
     constructor(private teamsRepository: TeamsRepository) {}
 
-    execute(): Response<Team[]> {
+    execute(): PromiseRes<Team[]> {
         return this.teamsRepository.get();
     }
 }

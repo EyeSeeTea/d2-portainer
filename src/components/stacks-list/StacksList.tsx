@@ -21,8 +21,8 @@ import { D2Stack, D2StackMethods } from "../../domain/entities/D2Stack";
 import { i18n } from "../../i18n";
 import { useHistory } from "react-router-dom";
 import { useLoggedAppContext } from "../AppContext";
-import { StringEither } from "../../utils/Either";
 import { StackStats } from "../stack-stats/StackStats";
+import { PromiseRes } from "../../utils/types";
 
 interface StacksListProps {
     stacks: D2Stack[];
@@ -174,11 +174,7 @@ const details: ObjectsTableDetailField<D2Stack>[] = columns.map(column => ({
     text: column.text,
 }));
 
-function showFeedback<T>(
-    value: Promise<StringEither<T>>,
-    snackbar: SnackbarState,
-    successMsg: string
-) {
+function showFeedback<T>(value: PromiseRes<T>, snackbar: SnackbarState, successMsg: string) {
     return value.then(res =>
         res.match({
             success: () => snackbar.success(successMsg),

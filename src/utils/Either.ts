@@ -27,7 +27,7 @@ export class Either<Error, Data> {
 
     map<Res>(fn: (data: Data) => Res): Either<Error, Res> {
         return this.match({
-            success: data => new Either({ type: "success", data: fn(data) }),
+            success: data => new Either<Error, Res>({ type: "success", data: fn(data) }),
             error: () => this as Either<Error, any>,
         });
     }
@@ -39,15 +39,6 @@ export class Either<Error, Data> {
         });
     }
 
-    static map2<Data1, Data2, Error, Res>(
-        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
-        fn: (data1: Data1, data2: Data2) => Res
-    ): Either<Error, Res> {
-        return either1.flatMap<Res>(data1 => {
-            return either2.map<Res>(data2 => fn(data1, data2));
-        });
-    }
-
     static error<Error>(error: Error) {
         return new Either<Error, never>({ type: "error", error });
     }
@@ -55,6 +46,13 @@ export class Either<Error, Data> {
     static success<Error, Data>(data: Data) {
         return new Either<Error, Data>({ type: "success", data });
     }
-}
 
-export type StringEither<T> = Either<string, T>;
+    static map2<Error, Res, Data1, Data2>(
+        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
+        fn: (data1: Data1, data2: Data2) => Res
+    ): Either<Error, Res> {
+        return either1.flatMap<Res>(data1 => {
+            return either2.map<Res>(data2 => fn(data1, data2));
+        });
+    }
+}

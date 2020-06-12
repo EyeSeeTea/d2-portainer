@@ -4,13 +4,14 @@ import _ from "lodash";
 import { D2Stack } from "./../domain/entities/D2Stack";
 import { D2StacksRepository, D2StackStats } from "../domain/repositories/D2StacksRepository";
 import { PortainerApi } from "./PortainerApi";
-import { StringEither, Either } from "../utils/Either";
+import { Either } from "../utils/Either";
 import config from "../config";
+import { PromiseRes } from "../utils/types";
 
 export class D2StacksPortainerRepository implements D2StacksRepository {
     constructor(public api: PortainerApi) {}
 
-    async stop(stack: D2Stack): Promise<StringEither<void>> {
+    async stop(stack: D2Stack): PromiseRes<void> {
         for (const container of _.values(stack.containers)) {
             const res = await this.api.stopContainer(container.id);
             if (res.isError()) return res;
@@ -18,7 +19,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         return Either.success(undefined);
     }
 
-    async start(stack: D2Stack): Promise<StringEither<void>> {
+    async start(stack: D2Stack): PromiseRes<void> {
         for (const container of _.values(stack.containers)) {
             const res = await this.api.startContainer(container.id);
             if (res.isError()) return res;
@@ -26,7 +27,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         return Either.success(undefined);
     }
 
-    async create(d2NewStack: D2NewStack): Promise<StringEither<void>> {
+    async create(d2NewStack: D2NewStack): PromiseRes<void> {
         const baseName = "d2-docker" + d2NewStack.dataInstance.replace(/dhis2-data/, "");
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
@@ -67,7 +68,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         );
     }
 
-    async get(): Promise<StringEither<D2Stack[]>> {
+    async get(): PromiseRes<D2Stack[]> {
         const [stacksRes, containersRes] = await Promise.all([
             this.api.getStacks(),
             this.api.getContainers({ all: true }),
@@ -84,7 +85,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
 
 function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | undefined {
     const apiContainersForGroup = _(apiContainers)
-        .filter(c => c.Labels["com.docker.compose.project"] == apiStack.Name)
+        .filter(c => c.Labels["com.docker.compose.project"] === apiStack.Name)
         .value();
 
     const containersByService = _(apiContainersForGroup)

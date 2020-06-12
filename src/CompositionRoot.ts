@@ -8,9 +8,6 @@ import { LoginUser } from "./domain/usecases/LoginUser";
 import { GetD2Stacks } from "./domain/usecases/GetD2Stacks";
 import { GetD2StackStats } from "./domain/usecases/GetD2StackStats";
 import { PortainerApi } from "./data/PortainerApi";
-import { LoadSession } from "./domain/usecases/LoadSession";
-import { StoreSession } from "./domain/usecases/StoreSession";
-import { SetDataSourceSession } from "./domain/usecases/SetDataSourceSession";
 import { DataSourcePortainerRepository } from "./data/DataSourcePortainerRepository";
 import { D2StacksPortainerRepository } from "./data/D2StacksPortainerRepository";
 import { GetTeams } from "./domain/usecases/GetTeams";
@@ -42,7 +39,6 @@ export class CompositionRoot {
             ),
             logout: execute(new LogoutUser(this.sessionRepository)),
             info: execute(new GetDataSourceInfo(this.dataSourceRepository)),
-            session: execute(new SetDataSourceSession(this.dataSourceRepository)),
         };
     }
 

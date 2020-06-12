@@ -1,7 +1,7 @@
 import { UserSession } from "./../entities/UserSession";
 import { DataSourceRepository } from "./../repositories/DataSourceRepository";
-import { StringEither } from "../../utils/Either";
 import { SessionRepository } from "../repositories/SessionRepository";
+import { PromiseRes } from "../../utils/types";
 
 export class LoginUser {
     constructor(
@@ -13,7 +13,7 @@ export class LoginUser {
         username: string,
         password: string,
         endPointName: string
-    ): Promise<StringEither<UserSession>> {
+    ): PromiseRes<UserSession> {
         const res = await this.dataSourceRepository.login(username, password, endPointName);
         return res.map(userSession => {
             this.dataSourceRepository.setSession(userSession);

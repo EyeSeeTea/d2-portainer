@@ -49,7 +49,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                 on(idocument.querySelector(".row.ng-scope"), el => el.remove());
             }
         }
-    }, [currentUser.token, url]);
+    }, [currentUser, url]);
 
     return (
         <ExpansionPanel className={classes.panel} defaultExpanded={initialOpen}>

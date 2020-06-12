@@ -1,7 +1,6 @@
-import { Endpoint } from "./../domain/entities/Endpoint";
 import axios, { AxiosRequestConfig } from "axios";
 import _ from "lodash";
-import { Either, StringEither } from "../utils/Either";
+import { Either } from "../utils/Either";
 import {
     Container,
     PostStackRequest,
@@ -11,14 +10,12 @@ import {
     Stack,
     Team,
 } from "./PortainerApiTypes";
-import { D2Stack } from "../domain/entities/D2Stack";
+import { PromiseRes } from "../utils/types";
 
 type Token = string;
 type LoginResponseSuccess = { jwt: Token };
 type LoginResponseError = { message: string; details: string };
 type LoginResponse = LoginResponseSuccess | LoginResponseError;
-
-type ApiRes<T> = StringEither<T>;
 
 export interface ConstructorOptions {
     baseUrl: string;
@@ -95,7 +92,7 @@ export class PortainerApi {
         username: string;
         password: string;
         endpointName: string;
-    }): Promise<ApiRes<PortainerApi>> {
+    }): PromiseRes<PortainerApi> {
         const { username, password, endpointName } = options;
         const { baseUrl } = this.options;
         const data = { Username: username, Password: password };
@@ -127,47 +124,47 @@ export class PortainerApi {
         }
     }
 
-    async startContainer(containerId: string): Promise<ApiRes<void>> {
+    async startContainer(containerId: string): PromiseRes<void> {
         return this.request(
             "POST",
             `/endpoints/${this.endpointId}/docker/containers/${containerId}/start`
         );
     }
 
-    async stopContainer(containerId: string): Promise<ApiRes<void>> {
+    async stopContainer(containerId: string): PromiseRes<void> {
         return this.request(
             "POST",
             `/endpoints/${this.endpointId}/docker/containers/${containerId}/stop`
         );
     }
 
-    async getStacks(): Promise<ApiRes<Stack[]>> {
+    async getStacks(): PromiseRes<Stack[]> {
         const url = `/stacks`;
         const res = await this.request<Stack[]>("GET", url);
         const endpointId = this.endpointId;
         return res.map(allStacks => allStacks.filter(stack => stack.EndpointId === endpointId));
     }
 
-    async createStack(newStackApi: PostStackRequest): Promise<ApiRes<PostStackResponse>> {
+    async createStack(newStackApi: PostStackRequest): PromiseRes<PostStackResponse> {
         const url = `/stacks?endpointId=${this.endpointId}&method=repository&type=2`;
         return this.request("POST", url, {
             data: newStackApi,
         });
     }
 
-    async setPermission(resourceId: number, permission: Permission): Promise<ApiRes<void>> {
+    async setPermission(resourceId: number, permission: Permission): PromiseRes<void> {
         return this.request("PUT", `/resource_controls/${resourceId}`, {
             data: permission,
         });
     }
 
-    async getContainers(options: { all: boolean }): Promise<ApiRes<Container[]>> {
+    async getContainers(options: { all: boolean }): PromiseRes<Container[]> {
         return this.request("GET", `/endpoints/${this.endpointId}/docker/containers/json`, {
             params: { all: options.all },
         });
     }
 
-    async getTeams(): Promise<ApiRes<Team[]>> {
+    async getTeams(): PromiseRes<Team[]> {
         return this.request("GET", `/teams`);
     }
 }

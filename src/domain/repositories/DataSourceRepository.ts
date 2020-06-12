@@ -1,12 +1,8 @@
 import { UserSession } from "./../entities/UserSession";
-import { StringEither } from "../../utils/Either";
+import { PromiseRes } from "../../utils/types";
 
 export interface DataSourceRepository {
-    login(
-        username: string,
-        password: string,
-        endpointName: string
-    ): Promise<StringEither<UserSession>>;
+    login(username: string, password: string, endpointName: string): PromiseRes<UserSession>;
 
     setSession(userSession: UserSession): void;
 
