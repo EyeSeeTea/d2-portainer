@@ -28,7 +28,7 @@ const App: React.FC<AppProps> = React.memo(props => {
 
     const logout = React.useCallback(() => setUserSession(null), [setUserSession]);
 
-    if (userSession === undefined) return <p>...</p>;
+    if (userSession === undefined) return null;
 
     const value = { compositionRoot, userSession };
 

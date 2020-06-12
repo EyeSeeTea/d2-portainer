@@ -25,14 +25,13 @@ export class Either<Error, Data> {
         return this.value.type === "success";
     }
 
-    map<Res>(fn: (data: Data) => Res): Either<Error, Res> {
-        return this.match({
-            success: data => new Either<Error, Res>({ type: "success", data: fn(data) }),
-            error: () => this as Either<Error, any>,
-        });
+    map<Data1>(fn: (data: Data) => Data1): Either<Error, Data1> {
+        return this.flatMap(
+            data => new Either<Error, Data1>({ type: "success", data: fn(data) })
+        );
     }
 
-    flatMap<Res>(fn: (data: Data) => Either<Error, Res>): Either<Error, Res> {
+    flatMap<Data1>(fn: (data: Data) => Either<Error, Data1>): Either<Error, Data1> {
         return this.match({
             success: data => fn(data),
             error: () => this as Either<Error, any>,

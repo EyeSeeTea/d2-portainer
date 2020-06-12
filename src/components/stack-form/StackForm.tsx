@@ -4,7 +4,7 @@ import { Card, CardContent } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
-import { D2NewStack } from "../../domain/entities/D2NewStack";
+import { D2NewStack, D2NewStackMethods } from "../../domain/entities/D2NewStack";
 import { Team } from "../../domain/entities/Team";
 import config from "../../config";
 import { FormTextField } from "./FormTextField";
@@ -18,38 +18,15 @@ interface StackFormProps {
     onCancelRequest(): void;
 }
 
-const initialData: D2NewStack = {
-    branch: "master",
-    dataInstance: "eyeseetea/dhis2-data:2.32-samaritans",
-    coreInstance: "eyeseetea/dhis2-core:2.32",
-    port: 8081,
-    access: "restricted",
-    teamIds: [],
-};
-
-const accesses = [
-    { value: "restricted", label: i18n.t("Restricted") },
-    { value: "admins", label: i18n.t("Administrators") },
-];
-
-const urlMappingOptions = config.urlMappings.map(mapping => ({
-    value: mapping.port.toString(),
-    label: mapping.url,
-}));
-
-const branchFromPort = _(config.urlMappings)
-    .map(mapping => [mapping.port, mapping.name])
-    .fromPairs()
-    .value();
-
 export const StackForm: React.FC<StackFormProps> = React.memo(props => {
     const { onSave, onCancelRequest } = props;
     const classes = useStyles();
-    const { compositionRoot } = useLoggedAppContext();
-    const [data, setData] = React.useState(initialData);
+    const { compositionRoot, isDev } = useLoggedAppContext();
+    const [data, setData] = React.useState(isDev ? initialStackDebug : initialStack);
     const [isSaving, setIsSaving] = React.useState(false);
     const snackbar = useSnackbar();
     const [teams, setTeams] = React.useState<Option[]>([]);
+    const [isCoreImageModified, setCoreImageModified] = React.useState(false);
 
     React.useEffect(() => {
         compositionRoot.teams.get().then(res => {
@@ -61,6 +38,25 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
         });
     }, [compositionRoot, snackbar]);
 
+    const setDataImage = React.useCallback(
+        value => {
+            setData(data =>
+                !isCoreImageModified
+                    ? new D2NewStackMethods(data).setCoreImageFromData(value)
+                    : { ...data, dataImage: value }
+            );
+        },
+        [setData, isCoreImageModified]
+    );
+
+    const setCoreImage = React.useCallback(
+        value => {
+            setData(data => ({ ...data, coreInstance: value }));
+            setCoreImageModified(true);
+        },
+        [setData]
+    );
+
     const create = React.useCallback(() => {
         setIsSaving(true);
         onSave(data).finally(() => setIsSaving(false));
@@ -71,13 +67,14 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
             <CardContent className={classes.form}>
                 <FormTextField
                     label={i18n.t("Data instance")}
-                    onChange={value => setData({ ...data, dataInstance: value })}
-                    value={data.dataInstance}
+                    onChange={setDataImage}
+                    value={data.dataImage}
+                    autoFocus={true}
                 />
 
                 <FormTextField
                     label={i18n.t("Core instance")}
-                    onChange={value => setData({ ...data, coreInstance: value })}
+                    onChange={setCoreImage}
                     value={data.coreInstance}
                 />
 
@@ -140,3 +137,36 @@ const useStyles = makeStyles(theme => ({
         minWidth: 120,
     },
 }));
+
+const initialStack: D2NewStack = {
+    branch: "master",
+    dataImage: "",
+    coreInstance: "",
+    port: 8080,
+    access: "restricted",
+    teamIds: [],
+};
+
+const initialStackDebug: D2NewStack = {
+    branch: "master",
+    dataImage: "eyeseetea/dhis2-data:2.32-empty1",
+    coreInstance: "eyeseetea/dhis2-core:2.32",
+    port: 8081,
+    access: "restricted",
+    teamIds: [],
+};
+
+const accesses = [
+    { value: "restricted", label: i18n.t("Restricted") },
+    { value: "admins", label: i18n.t("Administrators") },
+];
+
+const urlMappingOptions = config.urlMappings.map(mapping => ({
+    value: mapping.port.toString(),
+    label: mapping.url,
+}));
+
+const branchFromPort = _(config.urlMappings)
+    .map(mapping => [mapping.port, mapping.name])
+    .fromPairs()
+    .value();

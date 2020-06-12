@@ -28,7 +28,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     }
 
     async create(d2NewStack: D2NewStack): PromiseRes<void> {
-        const baseName = "d2-docker" + d2NewStack.dataInstance.replace(/dhis2-data/, "");
+        const baseName = "d2-docker" + d2NewStack.dataImage.replace(/dhis2-data/, "");
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
         const newStackApi: PostStackRequest = {
@@ -37,7 +37,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             RepositoryReferenceName: `refs/heads/${d2NewStack.branch}`,
             ComposeFilePathInRepository: repo.path,
             Env: [
-                { name: "DHIS2_DATA_IMAGE", value: d2NewStack.dataInstance },
+                { name: "DHIS2_DATA_IMAGE", value: d2NewStack.dataImage },
                 { name: "DHIS2_CORE_IMAGE", value: d2NewStack.coreInstance },
                 { name: "PORT", value: d2NewStack.port.toString() },
             ],

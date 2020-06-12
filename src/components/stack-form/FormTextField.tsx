@@ -5,17 +5,18 @@ interface FormTextFieldProps {
     label: string;
     value: string;
     onChange(value: string): void;
+    autoFocus?: boolean;
 }
 
 export const FormTextField: React.FC<FormTextFieldProps> = React.memo(props => {
-    const { label, value, onChange } = props;
+    const { label, value, onChange, autoFocus } = props;
 
     return (
         <TextField
             margin="normal"
+            autoFocus={autoFocus}
             required
             fullWidth
-            autoFocus
             label={label}
             onChange={ev => onChange(ev.currentTarget.value as string)}
             value={value}

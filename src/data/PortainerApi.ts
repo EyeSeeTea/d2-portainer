@@ -60,8 +60,10 @@ export class PortainerApi {
         if ((status >= 200 && status < 300) || [304].includes(status)) {
             return Either.success<string, T>(response.data as T);
         } else {
-            const msg = _.compact([status, JSON.stringify(response.data)]).join(" - ");
-            return Either.error(msg);
+            const { message, details } = response.data;
+            const msg = _.compact([message, details]).join(": ") || JSON.stringify(response.data);
+            const fullMsg = _.compact([status, msg]).join(" - ");
+            return Either.error(fullMsg);
         }
     }
 

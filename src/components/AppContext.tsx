@@ -7,18 +7,19 @@ export const AppContext = React.createContext<AppContextValue | undefined>(undef
 export interface AppContextValue {
     compositionRoot: CompositionRoot;
     userSession: UserSession | null;
+    isDev: boolean;
 }
 
 export type AppContextLoggedValue = AppContextValue & { userSession: UserSession };
 
 interface AppContextProps {
-    value: AppContextValue;
+    value: Pick<AppContextValue, "compositionRoot" | "userSession">;
 }
 
 export const AppContextProvider: React.FC<AppContextProps> = React.memo(props => {
     const { value, children } = props;
-
-    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+    const providerValue = { ...value, isDev: getIsDev() };
+    return <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>;
 });
 
 export function useAppContext(): AppContextValue {
@@ -35,4 +36,8 @@ export function useLoggedAppContext(): AppContextLoggedValue {
     if (!userSession) throw new Error("No user logged");
 
     return { ...appContext, userSession: userSession };
+}
+
+function getIsDev(): boolean {
+    return !!sessionStorage.getItem("debug");
 }
