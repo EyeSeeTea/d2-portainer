@@ -15,11 +15,16 @@ import { DataSourcePortainerRepository } from "./data/DataSourcePortainerReposit
 import { D2StacksPortainerRepository } from "./data/D2StacksPortainerRepository";
 import { GetTeams } from "./domain/usecases/GetTeams";
 import { TeamsPortainerRepository } from "./data/TeamsPortainerRepository";
+import { SessionRepository } from "./domain/repositories/SessionRepository";
+import { DataSourceRepository } from "./domain/repositories/DataSourceRepository";
+import { D2StacksRepository } from "./domain/repositories/D2StacksRepository";
+import { LogoutUser } from "./domain/usecases/LogoutUser";
+import { LoginUserFromSession } from "./domain/usecases/LoginUserFromSession";
 
 export class CompositionRoot {
-    dataSourceRepository: DataSourcePortainerRepository;
-    stacksRepository: D2StacksPortainerRepository;
-    sessionRepository: SessionBrowserStorageRepository;
+    dataSourceRepository: DataSourceRepository;
+    stacksRepository: D2StacksRepository;
+    sessionRepository: SessionRepository;
     teamsRepository: TeamsRepository;
 
     constructor(public options: { portainerApi: PortainerApi }) {
@@ -31,7 +36,11 @@ export class CompositionRoot {
 
     public get dataSource() {
         return {
-            login: execute(new LoginUser(this.dataSourceRepository)),
+            login: execute(new LoginUser(this.dataSourceRepository, this.sessionRepository)),
+            loginFromSession: execute(
+                new LoginUserFromSession(this.dataSourceRepository, this.sessionRepository)
+            ),
+            logout: execute(new LogoutUser(this.sessionRepository)),
             info: execute(new GetDataSourceInfo(this.dataSourceRepository)),
             session: execute(new SetDataSourceSession(this.dataSourceRepository)),
         };
@@ -44,13 +53,6 @@ export class CompositionRoot {
             stop: execute(new StopD2Stacks(this.stacksRepository)),
             create: execute(new CreateD2Stacks(this.stacksRepository)),
             getStats: execute(new GetD2StackStats(this.stacksRepository)),
-        };
-    }
-
-    public get session() {
-        return {
-            load: execute(new LoadSession(this.sessionRepository)),
-            store: execute(new StoreSession(this.sessionRepository)),
         };
     }
 

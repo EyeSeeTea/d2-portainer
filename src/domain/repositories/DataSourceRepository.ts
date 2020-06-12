@@ -8,7 +8,7 @@ export interface DataSourceRepository {
         endpointName: string
     ): Promise<StringEither<UserSession>>;
 
-    session(userSession: UserSession): void;
+    setSession(userSession: UserSession): void;
 
     info(): Info;
 }

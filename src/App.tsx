@@ -19,38 +19,16 @@ const App: React.FC<AppProps> = React.memo(props => {
         return new CompositionRoot({ portainerApi: api });
     }, [portainerUrl]);
 
-    const [userSession, setUserSession] = React.useState<UserSession | null | undefined>();
+    const [userSession, setUserSession] = React.useState<UserSession | null | undefined>(undefined);
 
-    const reloadSession = React.useCallback(
-        (userSession: UserSession | undefined) => {
-            if (userSession) {
-                compositionRoot.dataSource.session(userSession);
-                setUserSession(userSession);
-            } else {
-                setUserSession(null);
-            }
-        },
-        [setUserSession, compositionRoot]
-    );
     React.useEffect(() => {
-        const userSession = compositionRoot.session.load();
-        reloadSession(userSession);
-    }, [reloadSession, compositionRoot]);
+        const userSession = compositionRoot.dataSource.loginFromSession();
+        setUserSession(userSession || null);
+    }, [compositionRoot]);
 
-    const setUserSessionAndPersist = React.useCallback(
-        userSession => {
-            compositionRoot.session.store(userSession);
-            reloadSession(userSession);
-        },
-        [compositionRoot, reloadSession]
-    );
+    const logout = React.useCallback(() => setUserSession(null), [compositionRoot]);
 
-    const logout = React.useCallback(() => {
-        compositionRoot.session.store(undefined);
-        reloadSession(undefined);
-    }, [compositionRoot, reloadSession]);
-
-    if (userSession === undefined) return null;
+    if (userSession === undefined) return <p>...</p>;
 
     const value = { compositionRoot, userSession };
 
@@ -60,7 +38,7 @@ const App: React.FC<AppProps> = React.memo(props => {
                 {userSession ? (
                     <RootPage logout={logout} />
                 ) : (
-                    <LoginPage setUserSession={setUserSessionAndPersist} />
+                    <LoginPage setUserSession={setUserSession} />
                 )}
             </SnackbarProvider>
         </AppContextProvider>

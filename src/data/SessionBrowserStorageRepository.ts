@@ -4,14 +4,10 @@ import { UserSession } from "../domain/entities/UserSession";
 export class SessionBrowserStorageRepository implements SessionRepository {
     storageUserKey = "user";
 
-    store(userSession: UserSession | undefined): void {
+    store(userSession: UserSession): void {
         const { storageUserKey } = this;
-        if (userSession) {
-            const json = JSON.stringify(userSession);
-            sessionStorage.setItem(storageUserKey, json);
-        } else {
-            sessionStorage.removeItem(storageUserKey);
-        }
+        const json = JSON.stringify(userSession);
+        sessionStorage.setItem(storageUserKey, json);
     }
 
     load(): UserSession | undefined {
@@ -24,5 +20,9 @@ export class SessionBrowserStorageRepository implements SessionRepository {
             console.error(`Cannot parse sessionStorage item: ${storageUserKey}`);
             return;
         }
+    }
+
+    logout(): void {
+        sessionStorage.removeItem(this.storageUserKey);
     }
 }

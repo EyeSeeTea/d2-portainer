@@ -17,11 +17,7 @@ export class Either<Error, Data> {
         }
     }
 
-    getFailure(): Error | undefined {
-        return this.value.type === "error" ? this.value.error : undefined;
-    }
-
-    isFailure() {
+    isError() {
         return this.value.type === "error";
     }
 
@@ -44,10 +40,9 @@ export class Either<Error, Data> {
     }
 
     static map2<Data1, Data2, Error, Res>(
-        eithers: [Either<Error, Data1>, Either<Error, Data2>],
+        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
         fn: (data1: Data1, data2: Data2) => Res
     ): Either<Error, Res> {
-        const [either1, either2] = eithers;
         return either1.flatMap<Res>(data1 => {
             return either2.map<Res>(data2 => fn(data1, data2));
         });

@@ -4,7 +4,7 @@ import { D2Stack } from "../entities/D2Stack";
 
 export interface D2StacksRepository {
     get(): Promise<StringEither<D2Stack[]>>;
-    start(stck: D2Stack): Promise<StringEither<void>>;
+    start(stack: D2Stack): Promise<StringEither<void>>;
     stop(stack: D2Stack): Promise<StringEither<void>>;
     create(newStack: D2NewStack): Promise<StringEither<void>>;
     getStatsUrls(stack: D2Stack): D2StackStats;

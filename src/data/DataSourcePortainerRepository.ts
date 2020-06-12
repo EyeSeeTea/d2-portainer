@@ -19,7 +19,7 @@ export class DataSourcePortainerRepository implements DataSourceRepository {
         }));
     }
 
-    session(userSession: UserSession): void {
+    setSession(userSession: UserSession): void {
         this.api.session(userSession);
     }
 

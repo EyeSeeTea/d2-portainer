@@ -13,7 +13,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     async stop(stack: D2Stack): Promise<StringEither<void>> {
         for (const container of _.values(stack.containers)) {
             const res = await this.api.stopContainer(container.id);
-            if (res.isFailure()) return res;
+            if (res.isError()) return res;
         }
         return Either.success(undefined);
     }
@@ -21,7 +21,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     async start(stack: D2Stack): Promise<StringEither<void>> {
         for (const container of _.values(stack.containers)) {
             const res = await this.api.startContainer(container.id);
-            if (res.isFailure()) return res;
+            if (res.isError()) return res;
         }
         return Either.success(undefined);
     }

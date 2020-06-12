@@ -25,6 +25,11 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
         });
     }, [compositionRoot, snackbar]);
 
+    const logoutSession = React.useCallback(() => {
+        compositionRoot.dataSource.logout();
+        logout();
+    }, [compositionRoot]);
+
     React.useEffect(() => {
         getStacks();
         //const intervalId = setInterval(getStacks, refreshRate * 1000);
@@ -35,7 +40,7 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
         <div>
             <div style={{ float: "right", margin: 5 }}>
                 {i18n.t("Logged in as")} <b>{currentUser.username}</b>
-                <button style={{ marginLeft: 5 }} onClick={logout}>
+                <button style={{ marginLeft: 5 }} onClick={logoutSession}>
                     {i18n.t("logout")}
                 </button>
             </div>

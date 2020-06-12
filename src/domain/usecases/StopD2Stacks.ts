@@ -8,7 +8,7 @@ export class StopD2Stacks {
     async execute(stacks: D2Stack[]): Promise<StringEither<void>> {
         for (const stack of stacks) {
             const res = await this.stacksRepository.stop(stack);
-            if (res.isFailure()) return res;
+            if (res.isError()) return res;
         }
         return Either.success(undefined);
     }
