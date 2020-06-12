@@ -4,27 +4,37 @@ Control d2-docker containers using portainer
 
 ### Portainer
 
-Start a portainer instance on http://localhost:9000 (agent at :8000) with user `admin/123123123`:
-
-TODO: Change to direct portainer
+Download and start a portainer instance on http://localhost:9000 (agent at :8000) with user `admin/123123123`:
 
 ```
-$ docker run -p 9000:9000 -p 8000:8000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer --admin-password=$(htpasswd -nb -B admin 123123123 | cut -d ":" -f2)
+$ wget https://github.com/portainer/portainer/releases/latest/download/portainer-1.24.0-linux-amd64.tar.gz
+$ sudo ./portainer --bind :9000 --tunnel-port 8000 --data data --assets . --template-file templates.json --admin-password=$(htpasswd -nb -B admin 123123123 | cut -d ":" -f2)
 ```
+
+Note that we cannot use docker _portainer/portainer_ because stack creations using docker-compose won't be able to access files inside the docker where the repo is checked out from the host docker.
+
+Now create the required metadata:
 
 -   Create users.
 -   Create teams.
--   Create endpoint (to local) and assign to teams.
+-   Create an endpoint (Docker local) and assign teams that should be able to access it.
 -   Registries -> DockerHub: Configure auth.
+
+### Webapp
+
+```
+$ yarn install
+$ yarn build
+```
 
 ## Nginx
 
-Serve production at http://localhost:9003:
+Serve production at http://localhost:9003 with wrappings to portainer and the deployed webapp.
 
 ```
 http {
     server {
-        listen 9001;
+        listen 9003;
         server_name localhost;
 
         location /portainer/ {
@@ -36,13 +46,6 @@ http {
         }
     }
 }
-```
-
-### Webapp
-
-```
-$ yarn install
-$ yarn build
 ```
 
 ## Development
