@@ -1,4 +1,5 @@
 import React from "react";
+import _ from "lodash";
 import {
     ObjectsTable,
     TableColumn,
@@ -68,6 +69,14 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
         [compositionRoot, stacks, snackbar]
     );
 
+    const editPermissions = React.useCallback(
+        (ids: string[]) => {
+            const stackToEdit = _.first(D2StackMethods.getById(stacks, ids));
+            if (stackToEdit) history.push(`/edit/${stackToEdit.id}`);
+        },
+        [stacks, history]
+    );
+
     const globalActions: TableGlobalAction[] = React.useMemo(
         () => [
             { name: "refresh", text: i18n.t("Refresh"), icon: <SyncIcon />, onClick: onRefresh },
@@ -108,10 +117,10 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
                 isActive: D2StackMethods.isRunning,
             },
             {
-                name: "edit",
-                text: i18n.t("Edit"),
+                name: "edit-permissions",
+                text: i18n.t("Edit Permissions"),
                 multiple: false,
-                onClick: console.log,
+                onClick: editPermissions,
                 icon: <EditIcon />,
             },
             {
@@ -122,7 +131,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
                 icon: <DeleteIcon />,
             },
         ],
-        [stop, setStackStats, stacks, start]
+        [stop, setStackStats, stacks, start, editPermissions]
     );
 
     const updateTable = React.useCallback(

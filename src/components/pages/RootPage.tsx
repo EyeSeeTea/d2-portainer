@@ -6,6 +6,7 @@ import { i18n } from "../../i18n";
 import { useSnackbar } from "d2-ui-components";
 import { HashRouter, Route, Switch } from "react-router-dom";
 import { NewStackPage } from "./new-stack/NewStackPage";
+import { EditStackPage } from "./edit-stack/EditStackPage";
 
 interface RootPageProps {
     logout: () => void;
@@ -44,11 +45,16 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
                     {i18n.t("logout")}
                 </button>
             </div>
+
             <div style={{ clear: "both" }}></div>
 
             <HashRouter>
                 <Switch>
-                    <Route path="/new" render={() => <NewStackPage />} />
+                    <Route
+                        path="/edit/:id"
+                        render={({ match }) => <EditStackPage id={match.params.id} />}
+                    />
+                    <Route path="/new/" render={() => <NewStackPage />} />
                     <Route render={() => <StacksList stacks={stacks} onRefresh={getStacks} />} />
                 </Switch>
             </HashRouter>

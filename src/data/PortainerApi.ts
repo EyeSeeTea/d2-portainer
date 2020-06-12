@@ -6,9 +6,10 @@ import {
     PostStackRequest,
     PostStackResponse,
     Permission,
-    Endpoint as ApiEndpoint,
+    Endpoint,
     Stack,
     Team,
+    User,
 } from "./PortainerApiTypes";
 import { PromiseRes } from "../utils/types";
 
@@ -108,7 +109,7 @@ export class PortainerApi {
 
         if (isSuccessfulLogin(loginResponse)) {
             const token = loginResponse.jwt;
-            const endpointsRes = await this.request<ApiEndpoint[]>("GET", "/endpoints", {}, token);
+            const endpointsRes = await this.request<Endpoint[]>("GET", "/endpoints", {}, token);
             return endpointsRes.flatMap(endpoints => {
                 const endpoint = endpoints.find(endpoint => endpoint.Name === endpointName);
                 if (endpoint) {
@@ -140,6 +141,10 @@ export class PortainerApi {
         );
     }
 
+    async getStack(id: number): PromiseRes<Stack> {
+        return this.request<Stack>("GET", `/stacks/${id}`);
+    }
+
     async getStacks(): PromiseRes<Stack[]> {
         const url = `/stacks`;
         const res = await this.request<Stack[]>("GET", url);
@@ -168,6 +173,10 @@ export class PortainerApi {
 
     async getTeams(): PromiseRes<Team[]> {
         return this.request("GET", `/teams`);
+    }
+
+    async getUsers(): PromiseRes<User[]> {
+        return this.request("GET", `/users`);
     }
 }
 

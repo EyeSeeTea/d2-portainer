@@ -19,6 +19,28 @@ export interface Stack {
     Name: string;
     Type: number;
     EndpointId: number;
+    Env: Array<{ name: string; value: string }>;
+    ResourceControl: {
+        Id: number;
+        ResourceId: string;
+        Type: number;
+        UserAccesses: UserAccess[];
+        TeamAccesses: TeamAccess[];
+        Public: false;
+        AdministratorsOnly: false;
+        System: false;
+    };
+    ProjectPath: string;
+}
+
+export interface UserAccess {
+    UserId: number;
+    AccessLevel: number;
+}
+
+export interface TeamAccess {
+    TeamId: number;
+    AccessLevel: number;
 }
 
 type State = "created" | "exited" | "running";
@@ -111,4 +133,9 @@ export interface Endpoint {
 export interface Team {
     Id: number;
     Name: string;
+}
+
+export interface User {
+    Id: number;
+    Username: string;
 }

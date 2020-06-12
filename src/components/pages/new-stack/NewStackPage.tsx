@@ -11,10 +11,10 @@ interface NewStackPageProps {}
 
 export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const history = useHistory();
-    const { compositionRoot } = useAppContext();
+    const { compositionRoot, isDev } = useAppContext();
     const snackbar = useSnackbar();
     const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
-    const title = i18n.t("Create new D2-Docker stack");
+    const title = i18n.t("Create stack");
     const goToList = React.useCallback(() => history.push("/"), [history]);
 
     const save = React.useCallback(
@@ -31,6 +31,8 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
         },
         [compositionRoot, snackbar, goToList]
     );
+
+    const initialStack = isDev ? debugInitialStack : defaultInitialStack;
 
     return (
         <React.Fragment>
@@ -49,7 +51,30 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
                 helpText={undefined}
             />
 
-            <StackForm onSave={save} onCancelRequest={() => setCloseDialogOpen(true)} />
+            <StackForm<D2NewStack>
+                initialStack={initialStack}
+                saveButtonLabel={i18n.t("Create")}
+                onSave={save}
+                onCancelRequest={() => setCloseDialogOpen(true)}
+            />
         </React.Fragment>
     );
 });
+
+const defaultInitialStack: D2NewStack = {
+    dataImage: "",
+    coreImage: "",
+    port: 8080,
+    access: "restricted",
+    teamIds: [],
+    userIds: [],
+};
+
+const debugInitialStack: D2NewStack = {
+    dataImage: "eyeseetea/dhis2-data:2.32-empty1",
+    coreImage: "eyeseetea/dhis2-core:2.32",
+    port: 8081,
+    access: "restricted",
+    teamIds: [],
+    userIds: [],
+};

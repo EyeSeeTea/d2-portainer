@@ -1,10 +1,10 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import _ from "lodash";
 import { Card, CardContent } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
-import { D2NewStack, D2NewStackMethods } from "../../domain/entities/D2NewStack";
+import { D2NewStack, setCoreImageFromData } from "../../domain/entities/D2NewStack";
 import { Team } from "../../domain/entities/Team";
 import config from "../../config";
 import { FormTextField } from "./FormTextField";
@@ -13,26 +13,41 @@ import { FormMultipleSelectField } from "./FormMultipleSelectField";
 import { useLoggedAppContext } from "../AppContext";
 import { useSnackbar } from "d2-ui-components";
 
-interface StackFormProps {
-    onSave(data: D2NewStack): Promise<void>;
+interface StackFormProps<T extends D2NewStack> {
+    initialStack: T;
+    disabledFields?: Array<keyof T>;
+    saveButtonLabel: string;
+    onSave(data: T): Promise<void>;
     onCancelRequest(): void;
 }
 
-export const StackForm: React.FC<StackFormProps> = React.memo(props => {
-    const { onSave, onCancelRequest } = props;
+interface Options {
+    users: Option[];
+    teams: Option[];
+}
+
+type Access = D2NewStack["access"];
+
+function getOptions<T extends { id: number; name: string }>(objs: T[]): Option[] {
+    return objs.map(obj => ({ value: obj.id.toString(), label: obj.name }));
+}
+
+export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
+    const { onSave, onCancelRequest, saveButtonLabel, disabledFields = [] } = props;
     const classes = useStyles();
-    const { compositionRoot, isDev } = useLoggedAppContext();
-    const [data, setData] = React.useState(isDev ? initialStackDebug : initialStack);
+    const { compositionRoot } = useLoggedAppContext();
+    const [stack, setData] = React.useState(props.initialStack);
     const [isSaving, setIsSaving] = React.useState(false);
     const snackbar = useSnackbar();
-    const [teams, setTeams] = React.useState<Option[]>([]);
-    const [isCoreImageModified, setCoreImageModified] = React.useState(false);
+    const [options, setOptions] = React.useState<Options>({ users: [], teams: [] });
+    const [isCoreImageModified, setCoreImageModified] = React.useState(!!props.initialStack);
 
     React.useEffect(() => {
-        compositionRoot.teams.get().then(res => {
-            res.match({
-                success: (teams: Team[]) =>
-                    setTeams(teams.map(t => ({ value: t.id.toString(), label: t.name }))),
+        compositionRoot.memberships.get().then(metadataRes => {
+            metadataRes.match({
+                success: ({ teams, users }) => {
+                    setOptions({ teams: getOptions(teams), users: getOptions(users) });
+                },
                 error: snackbar.error,
             });
         });
@@ -42,7 +57,7 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
         value => {
             setData(data =>
                 !isCoreImageModified
-                    ? new D2NewStackMethods(data).setCoreImageFromData(value)
+                    ? setCoreImageFromData(data, value)
                     : { ...data, dataImage: value }
             );
         },
@@ -51,16 +66,16 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
 
     const setCoreImage = React.useCallback(
         value => {
-            setData(data => ({ ...data, coreInstance: value }));
+            setData(data => ({ ...data, coreImage: value }));
             setCoreImageModified(true);
         },
         [setData]
     );
 
-    const create = React.useCallback(() => {
+    const save = React.useCallback(() => {
         setIsSaving(true);
-        onSave(data).finally(() => setIsSaving(false));
-    }, [data, onSave]);
+        onSave(stack).finally(() => setIsSaving(false));
+    }, [stack, onSave]);
 
     return (
         <Card>
@@ -68,57 +83,65 @@ export const StackForm: React.FC<StackFormProps> = React.memo(props => {
                 <FormTextField
                     label={i18n.t("Data instance")}
                     onChange={setDataImage}
-                    value={data.dataImage}
+                    value={stack.dataImage}
                     autoFocus={true}
+                    disabled={disabledFields.includes("dataImage")}
                 />
 
                 <FormTextField
                     label={i18n.t("Core instance")}
                     onChange={setCoreImage}
-                    value={data.coreInstance}
+                    value={stack.coreImage}
+                    disabled={disabledFields.includes("coreImage")}
                 />
 
                 <FormSelectField
                     label={i18n.t("URL")}
-                    onChange={port =>
-                        setData({ ...data, port: parseInt(port), branch: branchFromPort[port] })
-                    }
+                    onChange={port => setData({ ...stack, port: parseInt(port) })}
                     options={urlMappingOptions}
-                    value={data.port.toString()}
+                    value={stack.port.toString()}
+                    disabled={disabledFields.includes("port")}
                 />
 
                 <FormSelectField
                     label={i18n.t("Access")}
-                    onChange={(access: D2NewStack["access"]) => setData({ ...data, access })}
-                    options={accesses}
-                    value={data.access as string}
+                    onChange={(access: Access) => setData({ ...stack, access })}
+                    options={accessOptions}
+                    value={stack.access as string}
                 />
 
-                {data.access === "restricted" && (
-                    <FormMultipleSelectField
-                        label={i18n.t("Teams with access")}
-                        onChange={teamIds =>
-                            setData({ ...data, teamIds: teamIds.map(s => parseInt(s)) })
-                        }
-                        options={teams}
-                        values={data.teamIds.map(id => id.toString())}
-                    />
+                {stack.access === "restricted" && (
+                    <React.Fragment>
+                        <FormMultipleSelectField
+                            label={i18n.t("Users with access")}
+                            onChange={userIds =>
+                                setData({ ...stack, userIds: userIds.map(s => parseInt(s)) })
+                            }
+                            options={options.users}
+                            values={stack.userIds.map(id => id.toString())}
+                        />
+
+                        <FormMultipleSelectField
+                            label={i18n.t("Teams with access")}
+                            onChange={teamIds =>
+                                setData({ ...stack, teamIds: teamIds.map(s => parseInt(s)) })
+                            }
+                            options={options.teams}
+                            values={stack.teamIds.map(id => id.toString())}
+                        />
+                    </React.Fragment>
                 )}
 
                 <div className={classes.button}>
                     <div>
-                        <FormButton
-                            label={i18n.t("Create")}
-                            onClick={create}
-                            isDisabled={isSaving}
-                        />
+                        <FormButton label={saveButtonLabel} onClick={save} isDisabled={isSaving} />
                         <FormButton label={i18n.t("Cancel")} onClick={onCancelRequest} />
                     </div>
                 </div>
             </CardContent>
         </Card>
     );
-});
+}
 
 const useStyles = makeStyles(theme => ({
     form: {
@@ -138,35 +161,12 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-const initialStack: D2NewStack = {
-    branch: "master",
-    dataImage: "",
-    coreInstance: "",
-    port: 8080,
-    access: "restricted",
-    teamIds: [],
-};
-
-const initialStackDebug: D2NewStack = {
-    branch: "master",
-    dataImage: "eyeseetea/dhis2-data:2.32-empty1",
-    coreInstance: "eyeseetea/dhis2-core:2.32",
-    port: 8081,
-    access: "restricted",
-    teamIds: [],
-};
-
-const accesses = [
+const accessOptions: Array<{ value: Access; label: string }> = [
     { value: "restricted", label: i18n.t("Restricted") },
-    { value: "admins", label: i18n.t("Administrators") },
+    { value: "admin", label: i18n.t("Administrators") },
 ];
 
 const urlMappingOptions = config.urlMappings.map(mapping => ({
     value: mapping.port.toString(),
     label: mapping.url,
 }));
-
-const branchFromPort = _(config.urlMappings)
-    .map(mapping => [mapping.port, mapping.name])
-    .fromPairs()
-    .value();

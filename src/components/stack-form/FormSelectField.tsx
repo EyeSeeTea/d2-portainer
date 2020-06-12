@@ -10,15 +10,16 @@ interface FormSelectFieldProps {
     value: Value;
     options: Option[];
     onChange(value: Value): void;
+    disabled?: boolean;
 }
 
 export const FormSelectField: React.FC<FormSelectFieldProps> = React.memo(props => {
-    const { label, value, options, onChange } = props;
+    const { label, value, options, onChange, disabled = false } = props;
     const classes = useStyles();
 
     return (
         <div>
-            <FormControl className={classes.formControl} fullWidth>
+            <FormControl className={classes.formControl} fullWidth disabled={disabled}>
                 <FormHelperText>{label}</FormHelperText>
 
                 <Select value={value} onChange={ev => onChange(ev.target.value as Value)}>

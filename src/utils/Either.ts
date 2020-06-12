@@ -50,8 +50,18 @@ export class Either<Error, Data> {
         [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
         fn: (data1: Data1, data2: Data2) => Res
     ): Either<Error, Res> {
+        return Either.flatMap2(
+            [either1, either2],
+            (data1, data2) => new Either<Error, Res>({ type: "success", data: fn(data1, data2) })
+        );
+    }
+
+    static flatMap2<Error, Res, Data1, Data2>(
+        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
+        fn: (data1: Data1, data2: Data2) => Either<Error, Res>
+    ): Either<Error, Res> {
         return either1.flatMap<Res>(data1 => {
-            return either2.map<Res>(data2 => fn(data1, data2));
+            return either2.flatMap<Res>(data2 => fn(data1, data2));
         });
     }
 }
