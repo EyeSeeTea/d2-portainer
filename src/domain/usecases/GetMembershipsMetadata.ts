@@ -1,10 +1,10 @@
-import { TeamsRepository, MembershipMetadata } from "../repositories/MemberShipRepository";
+import { MembershipRepository, MembershipMetadata } from "../repositories/MembershipRepository";
 import { PromiseRes } from "../../utils/types";
 
 export class GetMembershipsMetadata {
-    constructor(private teamsRepository: TeamsRepository) {}
+    constructor(private membershipRepository: MembershipRepository) {}
 
     execute(): PromiseRes<MembershipMetadata> {
-        return this.teamsRepository.getMetadata();
+        return this.membershipRepository.getMetadata();
     }
 }

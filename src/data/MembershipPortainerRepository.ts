@@ -1,6 +1,5 @@
-import { MembershipMetadata } from "../domain/repositories/MemberShipRepository";
+import { MembershipMetadata } from "../domain/repositories/MembershipRepository";
 import { PortainerApi } from "./PortainerApi";
-import { Team } from "../domain/entities/Team";
 import { PromiseRes } from "../utils/types";
 import { Either } from "../utils/Either";
 

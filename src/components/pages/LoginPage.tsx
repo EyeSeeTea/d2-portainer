@@ -81,6 +81,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
     return (
         <MuiContainer component="main" maxWidth="xs">
             <CssBaseline />
+
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
                     <LockOutlinedIcon />
@@ -105,16 +106,16 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                     />
 
                     <TextField
+                        type="password"
+                        autoComplete="current-password"
                         variant="outlined"
                         margin="normal"
                         required
                         fullWidth
                         name="password"
                         label={i18n.t("Password")}
-                        onChange={ev => setPassword(ev.currentTarget.value)}
-                        type="password"
-                        autoComplete="current-password"
                         value={password}
+                        onChange={ev => setPassword(ev.currentTarget.value)}
                         onKeyPress={loginIfEnter}
                     />
 

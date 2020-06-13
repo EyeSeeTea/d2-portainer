@@ -1,12 +1,15 @@
 type EitherValue<Error, Data> = { type: "error"; error: Error } | { type: "success"; data: Data };
 
-type MatchObject<Error, Data, Res> = {
-    success: (data: Data) => Res;
-    error: (error: Error) => Res;
-};
-
 export class Either<Error, Data> {
-    constructor(private value: EitherValue<Error, Data>) {}
+    private constructor(private readonly value: EitherValue<Error, Data>) {}
+
+    static error<Error, Data>(error: Error) {
+        return new Either<Error, Data>({ type: "error", error });
+    }
+
+    static success<Error, Data>(data: Data) {
+        return new Either<Error, Data>({ type: "success", data });
+    }
 
     match<Res>(matchObj: MatchObject<Error, Data, Res>): Res {
         switch (this.value.type) {
@@ -25,43 +28,37 @@ export class Either<Error, Data> {
         return this.value.type === "success";
     }
 
-    map<Data1>(fn: (data: Data) => Data1): Either<Error, Data1> {
-        return this.flatMap(
-            data => new Either<Error, Data1>({ type: "success", data: fn(data) })
-        );
+    map<DataRes>(fn: (data: Data) => DataRes): Either<Error, DataRes> {
+        return this.flatMap(data => Either.success(fn(data)));
     }
 
-    flatMap<Data1>(fn: (data: Data) => Either<Error, Data1>): Either<Error, Data1> {
+    flatMap<DataRes>(fn: (data: Data) => Either<Error, DataRes>): Either<Error, DataRes> {
         return this.match({
             success: data => fn(data),
-            error: () => this as Either<Error, any>,
+            error: error => Either.error(error),
         });
     }
 
-    static error<Error>(error: Error) {
-        return new Either<Error, never>({ type: "error", error });
-    }
-
-    static success<Error, Data>(data: Data) {
-        return new Either<Error, Data>({ type: "success", data });
-    }
-
-    static map2<Error, Res, Data1, Data2>(
+    static map2<Error, DataRes, Data1, Data2>(
         [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
-        fn: (data1: Data1, data2: Data2) => Res
-    ): Either<Error, Res> {
-        return Either.flatMap2(
-            [either1, either2],
-            (data1, data2) => new Either<Error, Res>({ type: "success", data: fn(data1, data2) })
-        );
-    }
-
-    static flatMap2<Error, Res, Data1, Data2>(
-        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
-        fn: (data1: Data1, data2: Data2) => Either<Error, Res>
-    ): Either<Error, Res> {
-        return either1.flatMap<Res>(data1 => {
-            return either2.flatMap<Res>(data2 => fn(data1, data2));
+        fn: (data1: Data1, data2: Data2) => DataRes
+    ): Either<Error, DataRes> {
+        return Either.flatMap2([either1, either2], (data1, data2) => {
+            return Either.success(fn(data1, data2));
         });
     }
+
+    static flatMap2<Error, DataRes, Data1, Data2>(
+        [either1, either2]: [Either<Error, Data1>, Either<Error, Data2>],
+        fn: (data1: Data1, data2: Data2) => Either<Error, DataRes>
+    ): Either<Error, DataRes> {
+        return either1.flatMap(data1 => {
+            return either2.flatMap(data2 => fn(data1, data2));
+        });
+    }
+}
+
+interface MatchObject<Error, Data, Res> {
+    success: (data: Data) => Res;
+    error: (error: Error) => Res;
 }

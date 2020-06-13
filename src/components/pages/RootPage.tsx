@@ -9,27 +9,30 @@ import { NewStackPage } from "./new-stack/NewStackPage";
 import { EditStackPage } from "./edit-stack/EditStackPage";
 
 interface RootPageProps {
-    logout: () => void;
+    onLogout: () => void;
 }
 
 // const refreshRate = 10;
 
 export const RootPage: React.FC<RootPageProps> = React.memo(props => {
-    const { logout } = props;
-    const { compositionRoot, userSession: currentUser } = useLoggedAppContext();
+    const { onLogout } = props;
+    const { compositionRoot, userSession } = useLoggedAppContext();
     const [stacks, setStacks] = React.useState<D2Stack[]>([]);
     const snackbar = useSnackbar();
 
     const getStacks = React.useCallback(() => {
         compositionRoot.stacks.get().then(res => {
-            res.match({ success: setStacks, error: error => snackbar.error(error) });
+            res.match({
+                success: setStacks,
+                error: snackbar.error,
+            });
         });
     }, [compositionRoot, snackbar]);
 
     const logoutSession = React.useCallback(() => {
         compositionRoot.dataSource.logout();
-        logout();
-    }, [compositionRoot, logout]);
+        onLogout();
+    }, [compositionRoot, onLogout]);
 
     React.useEffect(() => {
         getStacks();
@@ -40,7 +43,7 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
     return (
         <div>
             <div style={{ float: "right", margin: 5 }}>
-                {i18n.t("Logged in as")} <b>{currentUser.username}</b>
+                {i18n.t("Logged in as")} <b>{userSession.username}</b>
                 <button style={{ marginLeft: 5 }} onClick={logoutSession}>
                     {i18n.t("logout")}
                 </button>

@@ -6,40 +6,52 @@ import { RootPage } from "./components/pages/RootPage";
 import { SnackbarProvider } from "d2-ui-components";
 import { CompositionRoot } from "./CompositionRoot";
 import { PortainerApi } from "./data/PortainerApi";
+import { match } from "./utils/tagged-union";
+import { CircularProgress } from "@material-ui/core";
 
 interface AppProps {
     portainerUrl: string;
 }
 
+type State =
+    | { type: "getFromSession" }
+    | { type: "askAuth" }
+    | { type: "loggedIn"; userSession: UserSession };
+
 const App: React.FC<AppProps> = React.memo(props => {
     const { portainerUrl } = props;
 
     const compositionRoot = React.useMemo(() => {
-        const api = new PortainerApi({ baseUrl: portainerUrl });
-        return new CompositionRoot({ portainerApi: api });
+        const portainerApi = new PortainerApi({ baseUrl: portainerUrl });
+        return new CompositionRoot({ portainerApi });
     }, [portainerUrl]);
 
-    const [userSession, setUserSession] = React.useState<UserSession | null | undefined>(undefined);
+    const [state, setState] = React.useState<State>({ type: "getFromSession" });
 
     React.useEffect(() => {
-        const userSession = compositionRoot.dataSource.loginFromSession();
-        setUserSession(userSession || null);
-    }, [compositionRoot]);
+        if (state.type === "getFromSession") {
+            const userSession = compositionRoot.dataSource.loginFromSession();
+            setState(userSession ? { type: "loggedIn", userSession } : { type: "askAuth" });
+        }
+    }, [compositionRoot, state, setState]);
 
-    const logout = React.useCallback(() => setUserSession(null), [setUserSession]);
+    const logout = React.useCallback(() => setState({ type: "askAuth" }), [setState]);
 
-    if (userSession === undefined) return null;
+    const setUserSession = React.useCallback(
+        userSession => setState({ type: "loggedIn", userSession }),
+        [setState]
+    );
 
-    const value = { compositionRoot, userSession };
+    const userSession = state.type === "loggedIn" ? state.userSession : null;
 
     return (
-        <AppContextProvider value={value}>
+        <AppContextProvider compositionRoot={compositionRoot} userSession={userSession}>
             <SnackbarProvider>
-                {userSession ? (
-                    <RootPage logout={logout} />
-                ) : (
-                    <LoginPage setUserSession={setUserSession} />
-                )}
+                {match(state, {
+                    getFromSession: () => <CircularProgress />,
+                    askAuth: () => <LoginPage setUserSession={setUserSession} />,
+                    loggedIn: () => <RootPage onLogout={logout} />,
+                })}
             </SnackbarProvider>
         </AppContextProvider>
     );

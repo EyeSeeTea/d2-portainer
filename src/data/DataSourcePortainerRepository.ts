@@ -16,10 +16,10 @@ export class DataSourcePortainerRepository implements DataSourceRepository {
     }
 
     setSession(userSession: UserSession): void {
-        this.api.session(userSession);
+        this.api.setSession(userSession);
     }
 
-    info(): Info {
+    getInfo(): Info {
         return { url: this.api.baseUrl };
     }
 }

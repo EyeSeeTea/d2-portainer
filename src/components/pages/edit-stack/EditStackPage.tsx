@@ -28,7 +28,7 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const [stack, setStack] = React.useState<D2EditStack | undefined>();
 
     React.useEffect(() => {
-        compositionRoot.stacks.getForm(props.id).then(res =>
+        compositionRoot.stacks.getEdit(props.id).then(res =>
             res.match({
                 success: setStack,
                 error: msg => {

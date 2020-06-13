@@ -4,6 +4,6 @@ export class GetDataSourceInfo {
     constructor(private dataSourceRepository: DataSourceRepository) {}
 
     public execute(): Info {
-        return this.dataSourceRepository.info();
+        return this.dataSourceRepository.getInfo();
     }
 }

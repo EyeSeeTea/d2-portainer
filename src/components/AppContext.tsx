@@ -12,13 +12,11 @@ export interface AppContextValue {
 
 export type AppContextLoggedValue = AppContextValue & { userSession: UserSession };
 
-interface AppContextProps {
-    value: Pick<AppContextValue, "compositionRoot" | "userSession">;
-}
+type AppContextProps = Pick<AppContextValue, "compositionRoot" | "userSession">;
 
 export const AppContextProvider: React.FC<AppContextProps> = React.memo(props => {
-    const { value, children } = props;
-    const providerValue = { ...value, isDev: getIsDev() };
+    const { children, ...other } = props;
+    const providerValue = { ...other, isDev: getIsDev() };
     return <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>;
 });
 

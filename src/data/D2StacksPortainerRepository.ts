@@ -86,7 +86,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         );
     }
 
-    async getStackForm(id: string): PromiseRes<D2EditStack> {
+    async getEditStack(id: string): PromiseRes<D2EditStack> {
         const res = await this.api.getStack(parseInt(id));
         return res.map(stackApi => {
             const env = _(stackApi.Env)

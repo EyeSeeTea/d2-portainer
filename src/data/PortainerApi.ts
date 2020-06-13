@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import _ from "lodash";
+
 import { Either } from "../utils/Either";
 import {
     Container,
@@ -25,7 +26,7 @@ export interface ConstructorOptions {
 type State = { type: "not-logged" } | { type: "logged"; endpointId: number; token: string };
 
 export class PortainerApi {
-    public apiUrl: string;
+    public readonly apiUrl: string;
     public state: State;
 
     constructor(public options: ConstructorOptions, state?: State) {
@@ -46,7 +47,7 @@ export class PortainerApi {
         url: string,
         baseRequest: AxiosRequestConfig = {},
         token?: string
-    ) {
+    ): PromiseRes<T> {
         const token2 = token || this.token;
         const request = { ...baseRequest, method, url: this.getUrl(url) };
 
@@ -56,12 +57,12 @@ export class PortainerApi {
             validateStatus: _status => true,
             ...request,
         });
-        const { status } = response;
+        const { status, data } = response;
 
         if ((status >= 200 && status < 300) || [304].includes(status)) {
-            return Either.success<string, T>(response.data as T);
+            return Either.success(data as T);
         } else {
-            const { message, details } = response.data;
+            const { message, details } = data;
             const msg = _.compact([message, details]).join(": ") || JSON.stringify(response.data);
             const fullMsg = _.compact([status, msg]).join(" - ");
             return Either.error(fullMsg);
@@ -87,7 +88,11 @@ export class PortainerApi {
         return this.getLoggedInData().endpointId;
     }
 
-    session(options: { token: string; endpointId: number }) {
+    clearSession() {
+        this.state = { type: "not-logged" };
+    }
+
+    setSession(options: { token: string; endpointId: number }) {
         this.state = { type: "logged", ...options };
     }
 
@@ -103,7 +108,7 @@ export class PortainerApi {
             method: "POST",
             url: `${baseUrl}/api/auth`,
             data,
-            validateStatus: status => status >= 200 && status < 500,
+            validateStatus: _status => true,
         });
         const loginResponse = response.data as LoginResponse;
 
@@ -120,10 +125,12 @@ export class PortainerApi {
                     return Either.error(`Cannot find endpoint: name=${endpointName}`);
                 }
             });
-        } else {
+        } else if (isErrorLogin(loginResponse)) {
             const parts = [loginResponse.message, loginResponse.details];
             const msg = _.compact(parts).join(" - ") || "Cannot login";
             return Either.error(msg);
+        } else {
+            return Either.error("Cannot connect to API");
         }
     }
 
@@ -182,4 +189,11 @@ export class PortainerApi {
 
 function isSuccessfulLogin(loginResponse: LoginResponse): loginResponse is LoginResponseSuccess {
     return (loginResponse as LoginResponseSuccess).jwt !== undefined;
+}
+
+function isErrorLogin(loginResponse: LoginResponse): loginResponse is LoginResponseError {
+    return (
+        (loginResponse as LoginResponseError).message !== undefined &&
+        (loginResponse as LoginResponseError).details !== undefined
+    );
 }

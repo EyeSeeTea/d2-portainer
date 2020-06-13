@@ -6,7 +6,7 @@ import { D2EditStack } from "../entities/D2EditStack";
 export interface D2StacksRepository {
     get(): PromiseRes<D2Stack[]>;
     getById(id: string): PromiseRes<D2Stack>;
-    getStackForm(id: string): PromiseRes<D2EditStack>;
+    getEditStack(id: string): PromiseRes<D2EditStack>;
     start(stack: D2Stack): PromiseRes<void>;
     stop(stack: D2Stack): PromiseRes<void>;
     create(newStack: D2NewStack): PromiseRes<void>;

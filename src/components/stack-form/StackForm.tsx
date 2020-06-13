@@ -1,17 +1,16 @@
-import React, { ReactNode } from "react";
-import _ from "lodash";
+import React from "react";
 import { Card, CardContent } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { useSnackbar } from "d2-ui-components";
+
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
 import { D2NewStack, setCoreImageFromData } from "../../domain/entities/D2NewStack";
-import { Team } from "../../domain/entities/Team";
 import config from "../../config";
 import { FormTextField } from "./FormTextField";
 import { FormSelectField, Option } from "./FormSelectField";
 import { FormMultipleSelectField } from "./FormMultipleSelectField";
 import { useLoggedAppContext } from "../AppContext";
-import { useSnackbar } from "d2-ui-components";
 
 interface StackFormProps<T extends D2NewStack> {
     initialStack: T;
@@ -28,19 +27,15 @@ interface Options {
 
 type Access = D2NewStack["access"];
 
-function getOptions<T extends { id: number; name: string }>(objs: T[]): Option[] {
-    return objs.map(obj => ({ value: obj.id.toString(), label: obj.name }));
-}
-
 export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
-    const { onSave, onCancelRequest, saveButtonLabel, disabledFields = [] } = props;
+    const { onSave, onCancelRequest, saveButtonLabel, initialStack, disabledFields = [] } = props;
     const classes = useStyles();
     const { compositionRoot } = useLoggedAppContext();
-    const [stack, setData] = React.useState(props.initialStack);
+    const [stack, setData] = React.useState(initialStack);
     const [isSaving, setIsSaving] = React.useState(false);
     const snackbar = useSnackbar();
     const [options, setOptions] = React.useState<Options>({ users: [], teams: [] });
-    const [isCoreImageModified, setCoreImageModified] = React.useState(!!props.initialStack);
+    const [isCoreImageModified, setCoreImageModified] = React.useState(!!initialStack.coreImage);
 
     React.useEffect(() => {
         compositionRoot.memberships.get().then(metadataRes => {
@@ -170,3 +165,7 @@ const urlMappingOptions = config.urlMappings.map(mapping => ({
     value: mapping.port.toString(),
     label: mapping.url,
 }));
+
+function getOptions<T extends { id: number; name: string }>(objs: T[]): Option[] {
+    return objs.map(obj => ({ value: obj.id.toString(), label: obj.name }));
+}

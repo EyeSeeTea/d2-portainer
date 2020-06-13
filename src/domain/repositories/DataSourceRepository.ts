@@ -3,10 +3,8 @@ import { PromiseRes } from "../../utils/types";
 
 export interface DataSourceRepository {
     login(username: string, password: string, endpointName: string): PromiseRes<UserSession>;
-
     setSession(userSession: UserSession): void;
-
-    info(): Info;
+    getInfo(): Info;
 }
 
 export interface Info {
