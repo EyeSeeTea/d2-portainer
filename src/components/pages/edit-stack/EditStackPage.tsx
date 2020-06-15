@@ -26,13 +26,18 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
     const goToList = React.useCallback(() => history.push("/"), [history]);
     const [stack, setStack] = React.useState<D2EditStack | undefined>();
+    const [formChanged, setFormChanged] = React.useState(false);
+
+    const requestGoToList = React.useCallback(() => {
+        formChanged ? setCloseDialogOpen(true) : goToList();
+    }, [formChanged, setCloseDialogOpen, goToList]);
 
     React.useEffect(() => {
         compositionRoot.stacks.getEdit(props.id).then(res =>
             res.match({
                 success: setStack,
                 error: msg => {
-                    // TODO: create a hooks that joins goTo with snackbar
+                    // TODO: create a hook that joins goTo with snackbar
                     snackbar.error(msg);
                     goToList();
                 },
@@ -68,19 +73,16 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
                 saveText={i18n.t("Ok")}
             />
 
-            <PageHeader
-                title={title}
-                onBackClick={() => setCloseDialogOpen(true)}
-                helpText={undefined}
-            />
+            <PageHeader title={title} onBackClick={requestGoToList} helpText={undefined} />
 
             {stack ? (
                 <StackForm<D2EditStack>
                     saveButtonLabel={i18n.t("Save")}
                     onSave={update}
                     disabledFields={disabledFields}
-                    onCancelRequest={() => setCloseDialogOpen(true)}
+                    onCancelRequest={requestGoToList}
                     initialStack={stack}
+                    onChange={() => setFormChanged(true)}
                 />
             ) : (
                 <CircularProgress />

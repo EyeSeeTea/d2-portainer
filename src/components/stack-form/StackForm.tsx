@@ -16,8 +16,9 @@ interface StackFormProps<T extends D2NewStack> {
     initialStack: T;
     disabledFields?: Array<keyof T>;
     saveButtonLabel: string;
-    onSave(data: T): Promise<void>;
+    onSave(stack: T): Promise<void>;
     onCancelRequest(): void;
+    onChange(stack: T): void;
 }
 
 interface Options {
@@ -28,14 +29,20 @@ interface Options {
 type Access = D2NewStack["access"];
 
 export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
-    const { onSave, onCancelRequest, saveButtonLabel, initialStack, disabledFields = [] } = props;
+    const { onChange, onSave, onCancelRequest } = props;
+    const { saveButtonLabel, initialStack, disabledFields = [] } = props;
     const classes = useStyles();
     const { compositionRoot } = useLoggedAppContext();
-    const [stack, setData] = React.useState(initialStack);
+    const [stack, setStack] = React.useState(initialStack);
     const [isSaving, setIsSaving] = React.useState(false);
     const snackbar = useSnackbar();
     const [options, setOptions] = React.useState<Options>({ users: [], teams: [] });
     const [isCoreImageModified, setCoreImageModified] = React.useState(!!initialStack.coreImage);
+    React.useEffect(() => {
+        if (stack !== initialStack) {
+            onChange(stack);
+        }
+    }, [stack, initialStack, onChange]);
 
     React.useEffect(() => {
         compositionRoot.memberships.get().then(metadataRes => {
@@ -50,21 +57,21 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
     const setDataImage = React.useCallback(
         value => {
-            setData(data =>
+            setStack(data =>
                 !isCoreImageModified
                     ? setCoreImageFromData(data, value)
                     : { ...data, dataImage: value }
             );
         },
-        [setData, isCoreImageModified]
+        [setStack, isCoreImageModified]
     );
 
     const setCoreImage = React.useCallback(
         value => {
-            setData(data => ({ ...data, coreImage: value }));
+            setStack(data => ({ ...data, coreImage: value }));
             setCoreImageModified(true);
         },
-        [setData]
+        [setStack]
     );
 
     const save = React.useCallback(() => {
@@ -92,7 +99,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
                 <FormSelectField
                     label={i18n.t("URL")}
-                    onChange={port => setData({ ...stack, port: parseInt(port) })}
+                    onChange={port => setStack({ ...stack, port: parseInt(port) })}
                     options={urlMappingOptions}
                     value={stack.port.toString()}
                     disabled={disabledFields.includes("port")}
@@ -100,7 +107,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
                 <FormSelectField
                     label={i18n.t("Access")}
-                    onChange={(access: Access) => setData({ ...stack, access })}
+                    onChange={(access: Access) => setStack({ ...stack, access })}
                     options={accessOptions}
                     value={stack.access as string}
                 />
@@ -110,7 +117,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
                         <FormMultipleSelectField
                             label={i18n.t("Users with access")}
                             onChange={userIds =>
-                                setData({ ...stack, userIds: userIds.map(s => parseInt(s)) })
+                                setStack({ ...stack, userIds: userIds.map(s => parseInt(s)) })
                             }
                             options={options.users}
                             values={stack.userIds.map(id => id.toString())}
@@ -119,7 +126,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
                         <FormMultipleSelectField
                             label={i18n.t("Teams with access")}
                             onChange={teamIds =>
-                                setData({ ...stack, teamIds: teamIds.map(s => parseInt(s)) })
+                                setStack({ ...stack, teamIds: teamIds.map(s => parseInt(s)) })
                             }
                             options={options.teams}
                             values={stack.teamIds.map(id => id.toString())}

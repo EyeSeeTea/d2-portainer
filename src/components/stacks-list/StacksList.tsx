@@ -25,24 +25,37 @@ import { useLoggedAppContext } from "../AppContext";
 import { StackStats } from "../stack-stats/StackStats";
 import { PromiseRes } from "../../utils/types";
 
-interface StacksListProps {
-    stacks: D2Stack[];
-    onRefresh: () => void;
-}
+// const refreshRate = 10;
+
+interface StacksListProps {}
 
 export const StacksList: React.FC<StacksListProps> = React.memo(props => {
-    const { stacks, onRefresh } = props;
-
     const { compositionRoot } = useLoggedAppContext();
-    const [rows, setRows] = React.useState<D2Stack[]>([]);
+    const [stacks, setStacks] = React.useState<D2Stack[]>([]);
     const [search, setSearch] = React.useState<string>("");
     const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
     const history = useHistory();
     const snackbar = useSnackbar();
+    console.log({ stacks });
+
+    const getStacks = React.useCallback(() => {
+        compositionRoot.stacks.get().then(res => {
+            res.match({
+                success: setStacks,
+                error: snackbar.error,
+            });
+        });
+    }, [compositionRoot, snackbar]);
 
     React.useEffect(() => {
-        setRows(D2StackMethods.filterStacks(stacks, search));
+        getStacks();
+        //const intervalId = setInterval(getStacks, refreshRate * 1000);
+        //return () => clearInterval(intervalId);
+    }, [getStacks]);
+
+    React.useEffect(() => {
+        setStacks(D2StackMethods.filterStacks(stacks, search));
     }, [search, stacks]);
 
     const stop = React.useCallback(
@@ -79,9 +92,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
 
     const globalActions: TableGlobalAction[] = React.useMemo(
         () => [
-            { name: "refresh", text: i18n.t("Refresh"), icon: <SyncIcon />, onClick: onRefresh },
+            { name: "refresh", text: i18n.t("Refresh"), icon: <SyncIcon />, onClick: getStacks },
         ],
-        [onRefresh]
+        [getStacks]
     );
 
     const actions: TableAction<D2Stack>[] = React.useMemo(
@@ -152,7 +165,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
             {stackStats && <StackStats stack={stackStats} onClose={closeStats} />}
 
             <ObjectsTable<D2Stack>
-                rows={rows}
+                rows={stacks}
                 columns={columns}
                 details={details}
                 actions={actions}

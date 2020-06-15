@@ -16,6 +16,11 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
     const title = i18n.t("Create stack");
     const goToList = React.useCallback(() => history.push("/"), [history]);
+    const [formChanged, setFormChanged] = React.useState(false);
+
+    const requestGoToList = React.useCallback(() => {
+        formChanged ? setCloseDialogOpen(true) : goToList();
+    }, [formChanged, setCloseDialogOpen, goToList]);
 
     const save = React.useCallback(
         (data: D2NewStack) => {
@@ -45,17 +50,14 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
                 saveText={i18n.t("Ok")}
             />
 
-            <PageHeader
-                title={title}
-                onBackClick={() => setCloseDialogOpen(true)}
-                helpText={undefined}
-            />
+            <PageHeader title={title} onBackClick={requestGoToList} helpText={undefined} />
 
             <StackForm<D2NewStack>
                 initialStack={initialStack}
                 saveButtonLabel={i18n.t("Create")}
                 onSave={save}
-                onCancelRequest={() => setCloseDialogOpen(true)}
+                onCancelRequest={requestGoToList}
+                onChange={() => setFormChanged(true)}
             />
         </React.Fragment>
     );
