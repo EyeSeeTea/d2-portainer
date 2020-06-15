@@ -9,6 +9,7 @@ import {
     TableSelection,
     useSnackbar,
     TableGlobalAction,
+    ConfirmationDialog,
 } from "d2-ui-components";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
@@ -36,9 +37,22 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
     const [actionActive, setActionActive] = React.useState(false);
+    const [stacksToDelete, setStacksToDelete] = React.useState<D2Stack[]>([]);
     const history = useHistory();
     const snackbar = useSnackbar();
     const classes = useStyles();
+
+    const openDeleteConfirmation = React.useCallback(
+        (ids: string[]) => {
+            const stacksToDelete = D2StackMethods.getById(stacks, ids);
+            setStacksToDelete(stacksToDelete);
+        },
+        [stacks, setStacksToDelete]
+    );
+
+    const closeConfirmation = React.useCallback(() => {
+        setStacksToDelete([]);
+    }, [setStacksToDelete]);
 
     function withProgress<Args extends any[], Res>(fn: (...args: Args) => Promise<Res>) {
         return (...args: Args) => {
@@ -83,12 +97,15 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     );
 
     const delete_ = React.useCallback(
-        withProgress((ids: string[]) => {
-            return compositionRoot.stacks
-                .delete(ids)
-                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) deleted") }));
+        withProgress(() => {
+            return compositionRoot.stacks.delete(stacksToDelete.map(stack => stack.id)).then(
+                showSnackbar(snackbar, {
+                    message: i18n.t("Stack(s) deleted"),
+                    action: () => setStacksToDelete([]),
+                })
+            );
         }),
-        [compositionRoot, snackbar]
+        [compositionRoot, snackbar, stacksToDelete]
     );
 
     const editPermissions = React.useCallback(
@@ -149,11 +166,11 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
                 name: "delete",
                 text: i18n.t("Delete"),
                 multiple: true,
-                onClick: delete_,
+                onClick: openDeleteConfirmation,
                 icon: <DeleteIcon />,
             },
         ],
-        [stop, setStackStats, stacks, start, editPermissions, delete_]
+        [stop, setStackStats, stacks, start, editPermissions, openDeleteConfirmation]
     );
 
     const updateTable = React.useCallback(
@@ -190,6 +207,23 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
                 selection={selection}
                 onChange={updateTable}
             />
+
+            {!_.isEmpty(stacksToDelete) && (
+                <ConfirmationDialog
+                    isOpen={true}
+                    onSave={delete_}
+                    onCancel={closeConfirmation}
+                    title={i18n.t("Are you sure you want to delete those d2-docker instances?")}
+                    saveText={i18n.t("Proceeed")}
+                    cancelText={i18n.t("Cancel")}
+                >
+                    <ul>
+                        {stacksToDelete.map(stack => (
+                            <li key={stack.id}>{stack.dataImage}</li>
+                        ))}
+                    </ul>
+                </ConfirmationDialog>
+            )}
         </div>
     );
 });

@@ -17,6 +17,7 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
     const classes = useStyles();
     const title = i18n.t("Stats: ") + stack.dataImage;
     const stats = compositionRoot.stacks.getStats(stack);
+    const contentsRef = React.useRef<HTMLDivElement | null>(null);
 
     return (
         <ConfirmationDialog
@@ -27,8 +28,8 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
             fullWidth={true}
             maxWidth="xl"
         >
-            <div className={classes.root}>
-                <StatsDetails title={i18n.t("Core")} url={stats.core} initialOpen={true} />
+            <div className={classes.root} ref={contentsRef}>
+                <StatsDetails title={i18n.t("Core")} url={stats.core} />
                 <StatsDetails title={i18n.t("Database")} url={stats.db} />
                 <StatsDetails title={i18n.t("Nginx")} url={stats.gateway} />
             </div>

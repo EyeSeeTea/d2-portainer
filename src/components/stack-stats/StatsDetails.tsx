@@ -39,13 +39,10 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                 localStorage["portainer.ENDPOINT_ID"] = JSON.stringify(currentUser.endpointId);
                 iframe.contentWindow.location.replace(url);
             } else {
-                on(idocument.querySelector("#sideview"), el => el.remove());
-                on(
-                    idocument.querySelector<HTMLElement>("#page-wrapper"),
-                    el => (el.style.paddingLeft = "0px")
-                );
-                onAll(idocument.querySelectorAll(".row.header"), el => el.remove());
-                on(idocument.querySelector(".row.ng-scope"), el => el.remove());
+                on(idocument, "#sideview", el => remove(el));
+                on(idocument, "#page-wrapper", el => (el.style.paddingLeft = "0px"));
+                on(idocument, ".row.ng-scope", el => remove(el));
+                onAll(idocument, ".row.header", el => remove(el));
             }
         }
     }, [currentUser, url]);
@@ -62,7 +59,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                     ref={iframeRef}
                     src={url}
                     width="100%"
-                    height="1000"
+                    height="600"
                     frameBorder="0"
                     marginHeight={0}
                     marginWidth={0}
@@ -83,10 +80,20 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-function on<T extends Element>(element: T | undefined | null, action: (el: T) => void): void {
+function remove<T extends HTMLElement>(element: T): void {
+    element.style.display = "none";
+}
+
+function on(document: Document, selector: string, action: (el: HTMLElement) => void): void {
+    const element = document.querySelector<HTMLElement>(selector);
     if (element) action(element);
 }
 
-function onAll<T extends Element>(elements: NodeListOf<T>, action: (el: T) => void): void {
+function onAll<T extends Element>(
+    document: Document,
+    selector: string,
+    action: (el: HTMLElement) => void
+): void {
+    const elements = document.querySelectorAll<HTMLElement>(selector);
     Array.from(elements).forEach(el => action(el));
 }
