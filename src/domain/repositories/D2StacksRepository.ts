@@ -5,6 +5,7 @@ import { PromiseRes } from "../../utils/types";
 export interface D2StacksRepository {
     get(): PromiseRes<D2Stack[]>;
     getById(id: string): PromiseRes<D2Stack>;
+    delete(ids: string[]): PromiseRes<void>;
     start(stack: D2Stack): PromiseRes<void>;
     stop(stack: D2Stack): PromiseRes<void>;
     create(newStack: D2NewStack): PromiseRes<void>;

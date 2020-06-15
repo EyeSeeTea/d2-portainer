@@ -1,7 +1,7 @@
 import { Res } from "./types";
 import { SnackbarState } from "d2-ui-components";
 
-export function showFeedback<Value, Output>(
+export function showSnackbar<Value, Output>(
     snackbar: SnackbarState,
     options: {
         message?: string;

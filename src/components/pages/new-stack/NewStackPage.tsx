@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import { D2NewStack } from "../../../domain/entities/D2NewStack";
 import { useAppContext } from "../../AppContext";
 import { StackFormWrapper } from "../../stack-form/StackFormWrapper";
-import { showFeedback } from "../../../utils/react-feedback";
+import { showSnackbar } from "../../../utils/react-feedback";
 
 interface NewStackPageProps {}
 
@@ -18,7 +18,7 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const save = React.useCallback(
         (stack: D2NewStack) => {
             return compositionRoot.stacks.create(stack).then(
-                showFeedback(snackbar, {
+                showSnackbar(snackbar, {
                     message: i18n.t(`Stack created: ${stack.dataImage}`),
                     action: () => {
                         goToList();

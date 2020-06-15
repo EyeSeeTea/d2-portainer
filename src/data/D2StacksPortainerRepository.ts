@@ -68,7 +68,8 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     }
 
     private async saveAcl(resourceId: number, acl: Acl): PromiseRes<void> {
-        const adminOnly = acl.access === "admin";
+        const noUserNowTeams = _(acl.userIds).isEmpty() && _(acl.teamIds).isEmpty();
+        const adminOnly = acl.access === "admin" || noUserNowTeams;
         const permission: Permission = {
             AdministratorsOnly: adminOnly,
             Public: false,
@@ -85,6 +86,10 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             stack.containers,
             container => `${baseUrl}/#/containers/${container.id}/stats`
         );
+    }
+
+    async delete(ids: string[]): PromiseRes<void> {
+        return this.api.deleteStacks(ids.map(id => parseInt(id)));
     }
 
     async getById(id: string): PromiseRes<D2Stack> {

@@ -19,6 +19,7 @@ import { D2StacksRepository } from "./domain/repositories/D2StacksRepository";
 import { LogoutUser } from "./domain/usecases/LogoutUser";
 import { LoginUserFromSession } from "./domain/usecases/LoginUserFromSession";
 import { UpdateD2Stacks } from "./domain/usecases/UpdateD2Stack";
+import { DeleteD2Stacks } from "./domain/usecases/DeleteD2Stacks";
 
 export class CompositionRoot {
     dataSourceRepository: DataSourceRepository;
@@ -51,6 +52,7 @@ export class CompositionRoot {
             getById: new GetD2Stack(this.stacksRepository),
             start: new StartD2Stacks(this.stacksRepository),
             stop: new StopD2Stacks(this.stacksRepository),
+            delete: new DeleteD2Stacks(this.stacksRepository),
             create: new CreateD2Stacks(this.stacksRepository),
             update: new UpdateD2Stacks(this.stacksRepository),
             getStats: new GetD2StackStats(this.stacksRepository),

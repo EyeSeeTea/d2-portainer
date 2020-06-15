@@ -6,7 +6,7 @@ import { useAppContext } from "../../AppContext";
 import { D2Stack } from "../../../domain/entities/D2Stack";
 import { D2NewStack } from "../../../domain/entities/D2NewStack";
 import { StackFormWrapper } from "../../stack-form/StackFormWrapper";
-import { showFeedback } from "../../../utils/react-feedback";
+import { showSnackbar } from "../../../utils/react-feedback";
 
 interface EditStackPageProps {
     id: string;
@@ -26,13 +26,13 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const [stack, setStack] = React.useState<D2Stack | undefined>();
 
     React.useEffect(() => {
-        compositionRoot.stacks.getById(props.id).then(showFeedback(snackbar, { action: setStack }));
+        compositionRoot.stacks.getById(props.id).then(showSnackbar(snackbar, { action: setStack }));
     }, [compositionRoot, snackbar, goToList, props.id]);
 
     const update = React.useCallback(
         (stack: D2Stack) => {
             return compositionRoot.stacks.update(stack).then(
-                showFeedback(snackbar, {
+                showSnackbar(snackbar, {
                     message: i18n.t("Stack updated"),
                     action: () => {
                         goToList();

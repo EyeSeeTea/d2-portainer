@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import _ from "lodash";
 import {
     ObjectsTable,
@@ -22,7 +22,8 @@ import { i18n } from "../../i18n";
 import { useHistory } from "react-router-dom";
 import { useLoggedAppContext } from "../AppContext";
 import { StackStats } from "../stack-stats/StackStats";
-import { showFeedback } from "../../utils/react-feedback";
+import { showSnackbar } from "../../utils/react-feedback";
+import { LinearProgress, makeStyles } from "@material-ui/core";
 
 // const refreshRate = 10;
 
@@ -34,13 +35,25 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     const [search, setSearch] = React.useState<string>("");
     const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
+    const [actionActive, setActionActive] = React.useState(false);
     const history = useHistory();
     const snackbar = useSnackbar();
+    const classes = useStyles();
+
+    function withProgress<Args extends any[], Res>(fn: (...args: Args) => Promise<Res>) {
+        return (...args: Args) => {
+            setActionActive(true);
+            fn(...args).finally(() => {
+                setActionActive(false);
+                getStacks();
+            });
+        };
+    }
 
     const getStacks = React.useCallback(() => {
         compositionRoot.stacks
             .get()
-            .then(showFeedback(snackbar, { message: "", action: setStacks }));
+            .then(showSnackbar(snackbar, { message: "", action: setStacks }));
     }, [compositionRoot, snackbar]);
 
     React.useEffect(() => {
@@ -54,23 +67,32 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     }, [search, stacks]);
 
     const stop = React.useCallback(
-        (ids: string[]) => {
+        withProgress((ids: string[]) => {
             const stacksToStop = D2StackMethods.getById(stacks, ids);
             return compositionRoot.stacks
                 .stop(stacksToStop)
-                .then(showFeedback(snackbar, { message: i18n.t("Stack(s) stopped") }));
-        },
+                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) stopped") }));
+        }),
         [compositionRoot, stacks, snackbar]
     );
 
     const start = React.useCallback(
-        (ids: string[]) => {
+        withProgress((ids: string[]) => {
             const stacksToStart = D2StackMethods.getById(stacks, ids);
             return compositionRoot.stacks
-                .stop(stacksToStart)
-                .then(showFeedback(snackbar, { message: i18n.t("Stack(s) started") }));
-        },
+                .start(stacksToStart)
+                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) started") }));
+        }),
         [compositionRoot, stacks, snackbar]
+    );
+
+    const delete_ = React.useCallback(
+        withProgress((ids: string[]) => {
+            return compositionRoot.stacks
+                .delete(ids)
+                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) deleted") }));
+        }),
+        [compositionRoot, snackbar]
     );
 
     const editPermissions = React.useCallback(
@@ -131,11 +153,11 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
                 name: "delete",
                 text: i18n.t("Delete"),
                 multiple: true,
-                onClick: console.log,
+                onClick: delete_,
                 icon: <DeleteIcon />,
             },
         ],
-        [stop, setStackStats, stacks, start, editPermissions]
+        [stop, setStackStats, stacks, start, editPermissions, delete_]
     );
 
     const updateTable = React.useCallback(
@@ -152,8 +174,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     }, [setStackStats]);
 
     return (
-        <React.Fragment>
+        <div className={classes.table}>
             {stackStats && <StackStats stack={stackStats} onClose={closeStats} />}
+            {actionActive && <LinearProgress className={classes.linearProgress} />}
 
             <ObjectsTable<D2Stack>
                 rows={stacks}
@@ -166,7 +189,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
                 selection={selection}
                 onChange={updateTable}
             />
-        </React.Fragment>
+        </div>
     );
 });
 
@@ -177,12 +200,41 @@ const columns: TableColumn<D2Stack>[] = [
         name: "port" as const,
         text: i18n.t("Port"),
         sortable: true,
-        getValue: c => (c.port ? c.port.toString() : "-"),
+        getValue: stack => (stack.port ? stack.port.toString() : "-"),
     },
     { name: "status" as const, text: i18n.t("Status"), sortable: false },
 ];
 
-const details: ObjectsTableDetailField<D2Stack>[] = columns.map(column => ({
-    name: column.name,
-    text: column.text,
+const otherDetails: ObjectsTableDetailField<D2Stack>[] = [
+    {
+        name: "access",
+        text: i18n.t("Permissions"),
+        getValue: stack => getAccess(stack),
+    },
+];
+
+const details: ObjectsTableDetailField<D2Stack>[] = columns
+    .map(column => ({ name: column.name, text: column.text }))
+    .concat(otherDetails);
+
+function getAccess(stack: D2Stack): ReactNode {
+    switch (stack.access) {
+        case "admin":
+            return i18n.t("Administrators Only");
+        case "restricted":
+            return i18n.t("Restricted");
+    }
+}
+
+const useStyles = makeStyles(theme => ({
+    table: {
+        margin: 10,
+    },
+    linearProgress: {
+        position: "absolute",
+        width: "50vw",
+        height: 10,
+        top: 10,
+        left: 10,
+    },
 }));

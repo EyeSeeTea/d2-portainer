@@ -11,7 +11,7 @@ import { FormTextField } from "./FormTextField";
 import { FormSelectField, Option } from "./FormSelectField";
 import { FormMultipleSelectField } from "./FormMultipleSelectField";
 import { useLoggedAppContext } from "../AppContext";
-import { showFeedback } from "../../utils/react-feedback";
+import { showSnackbar } from "../../utils/react-feedback";
 
 interface StackFormProps<T extends D2NewStack> {
     initialStack: T;
@@ -48,7 +48,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
     React.useEffect(() => {
         compositionRoot.memberships.get().then(
-            showFeedback(snackbar, {
+            showSnackbar(snackbar, {
                 action: ({ teams, users }) => {
                     setOptions({ teams: getOptions(teams), users: getOptions(users) });
                 },

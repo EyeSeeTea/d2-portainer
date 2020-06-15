@@ -166,6 +166,14 @@ export class PortainerApi {
         });
     }
 
+    async deleteStacks(stackIds: number[]): PromiseRes<void> {
+        for (const stackId of stackIds) {
+            const res = await this.request<void>("DELETE", `/stacks/${stackId}`);
+            if (res.isError()) return res;
+        }
+        return Either.success(undefined);
+    }
+
     async setPermission(resourceId: number, permission: Permission): PromiseRes<void> {
         return this.request("PUT", `/resource_controls/${resourceId}`, {
             data: permission,
