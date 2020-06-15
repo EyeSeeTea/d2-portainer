@@ -20,7 +20,10 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
             return compositionRoot.stacks.create(stack).then(
                 showSnackbar(compositionRoot, snackbar, {
                     message: i18n.t(`Stack created: ${stack.dataImage}`),
-                    action: () => {
+                    action: res => {
+                        if (res.warnings) {
+                            snackbar.warning(res.warnings.join("\n"));
+                        }
                         goToList();
                         return true;
                     },

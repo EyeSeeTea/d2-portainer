@@ -7,7 +7,11 @@ import {
 import { PostStackRequest, Permission, Stack, Container } from "./PortainerApiTypes";
 import _ from "lodash";
 import { D2Stack } from "./../domain/entities/D2Stack";
-import { D2StacksRepository, D2StackStats } from "../domain/repositories/D2StacksRepository";
+import {
+    D2StacksRepository,
+    D2StackStats,
+    MaybeWarnings,
+} from "../domain/repositories/D2StacksRepository";
 import { PortainerApi } from "./PortainerApi";
 import { Either } from "../utils/Either";
 import config from "../config";
@@ -33,7 +37,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         return Either.success(undefined);
     }
 
-    async create(d2NewStack: D2NewStack): PromiseRes<void> {
+    async create(d2NewStack: D2NewStack): PromiseRes<MaybeWarnings<void>> {
         const baseName = "d2-docker" + d2NewStack.dataImage.replace(/dhis2-data/, "");
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
@@ -54,12 +58,21 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             ],
         };
 
-        const res = await this.api.createStack(postStackRequest);
+        const createStackRes = await this.api.createStack(postStackRequest);
 
-        return res.match({
+        return createStackRes.match({
             error: msg => Promise.resolve(Either.error(msg)),
             success: res => {
-                return this.saveAcl(res.ResourceControl.Id, d2NewStack);
+                return this.saveAcl(res.ResourceControl.Id, d2NewStack).then(saveAclRes =>
+                    saveAclRes.match({
+                        success: () => Either.success({ data: undefined }),
+                        error: msg => {
+                            return msg.includes("Access denied to resource")
+                                ? Either.success({ data: undefined, warnings: [msg] })
+                                : Either.error(msg);
+                        },
+                    })
+                );
             },
         });
     }

@@ -218,7 +218,8 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
                     onSave={delete_}
                     onCancel={closeConfirmation}
                     title={i18n.t("Are you sure you want to delete those d2-docker instances?")}
-                    saveText={i18n.t("Proceeed")}
+                    disableSave={actionActive}
+                    saveText={i18n.t("Proceed")}
                     cancelText={i18n.t("Cancel")}
                 >
                     <ul>
