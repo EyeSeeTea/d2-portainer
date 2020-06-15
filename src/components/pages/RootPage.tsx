@@ -5,6 +5,7 @@ import { i18n } from "../../i18n";
 import { HashRouter, Route, Switch } from "react-router-dom";
 import { NewStackPage } from "./new-stack/NewStackPage";
 import { EditStackPage } from "./edit-stack/EditStackPage";
+import { Button } from "@material-ui/core";
 
 interface RootPageProps {
     onLogout: () => void;
@@ -23,9 +24,7 @@ export const RootPage: React.FC<RootPageProps> = React.memo(props => {
         <div>
             <div style={{ float: "right", margin: 5 }}>
                 {i18n.t("Logged in as")} <b>{userSession.username}</b>
-                <button style={{ marginLeft: 5 }} onClick={logoutSession}>
-                    {i18n.t("logout")}
-                </button>
+                <Button onClick={logoutSession}>{i18n.t("logout")}</Button>
             </div>
 
             <div style={{ clear: "both" }}></div>

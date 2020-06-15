@@ -24,6 +24,7 @@ import { useLoggedAppContext } from "../AppContext";
 import { StackStats } from "../stack-stats/StackStats";
 import { showSnackbar } from "../../utils/react-feedback";
 import { LinearProgress, makeStyles } from "@material-ui/core";
+import config from "../../config";
 
 // const refreshRate = 10;
 
@@ -58,8 +59,8 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
 
     React.useEffect(() => {
         getStacks();
-        //const intervalId = setInterval(getStacks, refreshRate * 1000);
-        //return () => clearInterval(intervalId);
+        const intervalId = setInterval(getStacks, 10 * 1000);
+        return () => clearInterval(intervalId);
     }, [getStacks]);
 
     React.useEffect(() => {
@@ -193,17 +194,26 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     );
 });
 
+const urlFromPorts = _(config.urlMappings)
+    .map(mapping => [mapping.port, mapping.url] as [number, string])
+    .fromPairs()
+    .value();
+
 const columns: TableColumn<D2Stack>[] = [
     { name: "dataImage" as const, text: i18n.t("Name"), sortable: true },
     { name: "state" as const, text: i18n.t("State"), sortable: true },
     {
         name: "port" as const,
-        text: i18n.t("Port"),
+        text: i18n.t("URL"),
         sortable: true,
-        getValue: stack => (stack.port ? stack.port.toString() : "-"),
+        getValue: getUrlFromStack,
     },
     { name: "status" as const, text: i18n.t("Status"), sortable: false },
 ];
+
+function getUrlFromStack(stack: D2Stack): string {
+    return (stack.port ? urlFromPorts[stack.port] : null) || "-";
+}
 
 const otherDetails: ObjectsTableDetailField<D2Stack>[] = [
     {
@@ -213,9 +223,7 @@ const otherDetails: ObjectsTableDetailField<D2Stack>[] = [
     },
 ];
 
-const details: ObjectsTableDetailField<D2Stack>[] = columns
-    .map(column => ({ name: column.name, text: column.text }))
-    .concat(otherDetails);
+const details: ObjectsTableDetailField<D2Stack>[] = columns.concat(otherDetails);
 
 function getAccess(stack: D2Stack): ReactNode {
     switch (stack.access) {
