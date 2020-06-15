@@ -11,13 +11,26 @@ $ wget https://github.com/portainer/portainer/releases/latest/download/portainer
 $ sudo ./portainer --bind :9000 --tunnel-port 8000 --data data --assets . --template-file templates.json --admin-password=$(htpasswd -nb -B admin 123123123 | cut -d ":" -f2)
 ```
 
+Start on boot-up, using supervisor:
+
+```
+[program:portainer]
+directory=/path/to/portainer-folder/portainer
+command=/path/to/portainer-folder/portainer OPTIONS
+```
+
+```
+$ sudo supervisorctl reload
+$ sudo supervisorctl status
+```
+
 Note that we cannot use docker _portainer/portainer_ because stack creations using docker-compose won't be able to access files inside the docker where the repo is checked out from the host docker.
 
 Now create the required metadata:
 
 -   Create users.
 -   Create teams.
--   Create an endpoint (Docker local) and assign teams that should be able to access it.
+-   Create a local Docker endpoint (name: `local`) and assign to those teams with access rights.
 -   Registries -> DockerHub: Configure auth.
 
 ### Webapp
@@ -33,9 +46,9 @@ Serve production at http://localhost:9003 with wrappings to portainer and the de
 
 ```
 http {
-    server {
-        listen 9003;
-        server_name localhost;
+server {
+listen 9003;
+server_name localhost;
 
         location /portainer/ {
             proxy_pass   http://127.0.0.1:9000/;
@@ -45,6 +58,7 @@ http {
             alias /path/to/webapp/build;
         }
     }
+
 }
 ```
 
@@ -54,9 +68,9 @@ http {
 
 ```
 http {
-    server {
-        listen 9002;
-        server_name localhost;
+server {
+listen 9002;
+server_name localhost;
 
         location /portainer/ {
             proxy_pass http://127.0.0.1:9000/;
