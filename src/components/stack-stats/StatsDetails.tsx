@@ -22,7 +22,6 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
     const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
     const login = React.useCallback(() => {
-        console.log("onLoad");
         const iframe = iframeRef.current;
         const idocument = iframe?.contentWindow?.document;
         if (!iframe || !iframe.contentWindow || !idocument) return;

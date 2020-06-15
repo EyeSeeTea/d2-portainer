@@ -1,13 +1,12 @@
 import React from "react";
 import { i18n } from "../../../i18n";
-import { ConfirmationDialog, useSnackbar } from "d2-ui-components";
+import { useSnackbar } from "d2-ui-components";
 import { useHistory } from "react-router-dom";
-import PageHeader from "../../page-header/PageHeader";
-import { StackForm } from "../../stack-form/StackForm";
 import { useAppContext } from "../../AppContext";
-import { CircularProgress } from "@material-ui/core";
 import { D2Stack } from "../../../domain/entities/D2Stack";
 import { D2NewStack } from "../../../domain/entities/D2NewStack";
+import { StackFormWrapper } from "../../stack-form/StackFormWrapper";
+import { showFeedback } from "../../../utils/react-feedback";
 
 interface EditStackPageProps {
     id: string;
@@ -23,37 +22,23 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const history = useHistory();
     const { compositionRoot } = useAppContext();
     const snackbar = useSnackbar();
-    const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
     const goToList = React.useCallback(() => history.push("/"), [history]);
     const [stack, setStack] = React.useState<D2Stack | undefined>();
-    const [formChanged, setFormChanged] = React.useState(false);
-
-    const requestGoToList = React.useCallback(() => {
-        formChanged ? setCloseDialogOpen(true) : goToList();
-    }, [formChanged, setCloseDialogOpen, goToList]);
 
     React.useEffect(() => {
-        compositionRoot.stacks.getById(props.id).then(res =>
-            res.match({
-                success: setStack,
-                error: msg => {
-                    // TODO: create a hook that joins goTo with snackbar
-                    snackbar.error(msg);
-                    goToList();
-                },
-            })
-        );
+        compositionRoot.stacks.getById(props.id).then(showFeedback(snackbar, { action: setStack }));
     }, [compositionRoot, snackbar, goToList, props.id]);
 
     const update = React.useCallback(
         (stack: D2Stack) => {
-            return compositionRoot.stacks.update(stack).then(res =>
-                res.match({
-                    success: () => {
-                        snackbar.success(i18n.t("D2Docker stack updated"));
+            return compositionRoot.stacks.update(stack).then(
+                showFeedback(snackbar, {
+                    message: i18n.t("Stack updated"),
+                    action: () => {
                         goToList();
+                        return true;
                     },
-                    error: snackbar.error,
+                    actionError: () => false,
                 })
             );
         },
@@ -63,30 +48,12 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const title = i18n.t("Edit stack:") + (stack ? ` ${stack.dataImage}` : "");
 
     return (
-        <React.Fragment>
-            <ConfirmationDialog
-                isOpen={isCloseDialogOpen}
-                onSave={goToList}
-                onCancel={() => setCloseDialogOpen(false)}
-                title={title}
-                description={i18n.t("All your changes will be lost. Are you sure?")}
-                saveText={i18n.t("Ok")}
-            />
-
-            <PageHeader title={title} onBackClick={requestGoToList} helpText={undefined} />
-
-            {stack ? (
-                <StackForm<D2Stack>
-                    saveButtonLabel={i18n.t("Save")}
-                    onSave={update}
-                    disabledFields={disabledFields}
-                    onCancelRequest={requestGoToList}
-                    initialStack={stack}
-                    onChange={() => setFormChanged(true)}
-                />
-            ) : (
-                <CircularProgress />
-            )}
-        </React.Fragment>
+        <StackFormWrapper
+            title={title}
+            saveLabel={i18n.t("Save")}
+            save={update}
+            disabledFields={disabledFields}
+            stack={stack}
+        />
     );
 });

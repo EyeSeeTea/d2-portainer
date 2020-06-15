@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "@material-ui/core";
+import { Card, CardContent, CircularProgress } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { useSnackbar } from "d2-ui-components";
 
@@ -11,12 +11,13 @@ import { FormTextField } from "./FormTextField";
 import { FormSelectField, Option } from "./FormSelectField";
 import { FormMultipleSelectField } from "./FormMultipleSelectField";
 import { useLoggedAppContext } from "../AppContext";
+import { showFeedback } from "../../utils/react-feedback";
 
 interface StackFormProps<T extends D2NewStack> {
     initialStack: T;
     disabledFields?: Array<keyof T>;
     saveButtonLabel: string;
-    onSave(stack: T): Promise<void>;
+    onSave(stack: T): Promise<boolean | undefined>;
     onCancelRequest(): void;
     onChange(stack: T): void;
 }
@@ -38,6 +39,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
     const snackbar = useSnackbar();
     const [options, setOptions] = React.useState<Options>({ users: [], teams: [] });
     const [isCoreImageModified, setCoreImageModified] = React.useState(!!initialStack.coreImage);
+
     React.useEffect(() => {
         if (stack !== initialStack) {
             onChange(stack);
@@ -45,14 +47,13 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
     }, [stack, initialStack, onChange]);
 
     React.useEffect(() => {
-        compositionRoot.memberships.get().then(metadataRes => {
-            metadataRes.match({
-                success: ({ teams, users }) => {
+        compositionRoot.memberships.get().then(
+            showFeedback(snackbar, {
+                action: ({ teams, users }) => {
                     setOptions({ teams: getOptions(teams), users: getOptions(users) });
                 },
-                error: snackbar.error,
-            });
-        });
+            })
+        );
     }, [compositionRoot, snackbar]);
 
     const setDataImage = React.useCallback(
@@ -76,7 +77,9 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
     const save = React.useCallback(() => {
         setIsSaving(true);
-        onSave(stack).finally(() => setIsSaving(false));
+        onSave(stack).then(successfulSave => {
+            if (!successfulSave) setIsSaving(false);
+        });
     }, [stack, onSave]);
 
     return (
@@ -138,6 +141,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
                     <div>
                         <FormButton label={saveButtonLabel} onClick={save} isDisabled={isSaving} />
                         <FormButton label={i18n.t("Cancel")} onClick={onCancelRequest} />
+                        {isSaving && <CircularProgress size={30} />}
                     </div>
                 </div>
             </CardContent>

@@ -1,12 +1,9 @@
 import _ from "lodash";
 import { Container } from "./Container";
-import { Acl } from "./Acl";
+import { D2NewStack } from "./D2NewStack";
 
-export interface D2Stack extends Acl {
+export interface D2Stack extends D2NewStack {
     id: string;
-    port: number | undefined;
-    dataImage: string;
-    coreImage: string;
     state: State;
     status: string;
     containers: Record<ContainerType, Container>;

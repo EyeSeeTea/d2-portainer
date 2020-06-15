@@ -8,7 +8,6 @@ import {
     TableState,
     TableSelection,
     useSnackbar,
-    SnackbarState,
     TableGlobalAction,
 } from "d2-ui-components";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -23,7 +22,7 @@ import { i18n } from "../../i18n";
 import { useHistory } from "react-router-dom";
 import { useLoggedAppContext } from "../AppContext";
 import { StackStats } from "../stack-stats/StackStats";
-import { PromiseRes } from "../../utils/types";
+import { showFeedback } from "../../utils/react-feedback";
 
 // const refreshRate = 10;
 
@@ -37,15 +36,11 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
     const history = useHistory();
     const snackbar = useSnackbar();
-    console.log({ stacks });
 
     const getStacks = React.useCallback(() => {
-        compositionRoot.stacks.get().then(res => {
-            res.match({
-                success: setStacks,
-                error: snackbar.error,
-            });
-        });
+        compositionRoot.stacks
+            .get()
+            .then(showFeedback(snackbar, { message: "", action: setStacks }));
     }, [compositionRoot, snackbar]);
 
     React.useEffect(() => {
@@ -61,11 +56,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     const stop = React.useCallback(
         (ids: string[]) => {
             const stacksToStop = D2StackMethods.getById(stacks, ids);
-            showFeedback(
-                compositionRoot.stacks.stop(stacksToStop),
-                snackbar,
-                i18n.t("Stack(s) stopped")
-            );
+            return compositionRoot.stacks
+                .stop(stacksToStop)
+                .then(showFeedback(snackbar, { message: i18n.t("Stack(s) stopped") }));
         },
         [compositionRoot, stacks, snackbar]
     );
@@ -73,11 +66,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     const start = React.useCallback(
         (ids: string[]) => {
             const stacksToStart = D2StackMethods.getById(stacks, ids);
-            showFeedback(
-                compositionRoot.stacks.start(stacksToStart),
-                snackbar,
-                i18n.t("Stack(s) started")
-            );
+            return compositionRoot.stacks
+                .stop(stacksToStart)
+                .then(showFeedback(snackbar, { message: i18n.t("Stack(s) started") }));
         },
         [compositionRoot, stacks, snackbar]
     );
@@ -195,12 +186,3 @@ const details: ObjectsTableDetailField<D2Stack>[] = columns.map(column => ({
     name: column.name,
     text: column.text,
 }));
-
-function showFeedback<T>(value: PromiseRes<T>, snackbar: SnackbarState, successMsg: string) {
-    return value.then(res =>
-        res.match({
-            success: () => snackbar.success(successMsg),
-            error: errorMsg => snackbar.error(errorMsg),
-        })
-    );
-}
