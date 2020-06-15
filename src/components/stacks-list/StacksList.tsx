@@ -17,6 +17,7 @@ import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import StopIcon from "@material-ui/icons/Stop";
 import EqualizerIcon from "@material-ui/icons/Equalizer";
 import SyncIcon from "@material-ui/icons/Sync";
+import OpenInBrowserIcon from "@material-ui/icons/OpenInBrowser";
 import { D2Stack, D2StackMethods } from "../../domain/entities/D2Stack";
 
 import { i18n } from "../../i18n";
@@ -235,7 +236,21 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
 
 const columns: TableColumn<D2Stack>[] = [
     { name: "dataImage" as const, text: i18n.t("Name"), sortable: true },
-    { name: "state" as const, text: i18n.t("State"), sortable: true },
+    {
+        name: "state" as const,
+        text: i18n.t("State"),
+        sortable: true,
+        getValue: (stack: D2Stack) => {
+            const { state } = stack;
+            const Icon = state === "running" ? PlayArrowIcon : StopIcon;
+            return (
+                <React.Fragment>
+                    <Icon style={{ height: 15 }} />
+                    {state}
+                </React.Fragment>
+            );
+        },
+    },
     {
         name: "url" as const,
         text: i18n.t("URL"),
@@ -247,9 +262,12 @@ const columns: TableColumn<D2Stack>[] = [
 
 function link(text: string, url: string): ReactNode {
     return (
-        <a rel="noopener noreferrer" target="_blank" href={url}>
-            {text}
-        </a>
+        <React.Fragment>
+            <OpenInBrowserIcon style={{ height: 15 }} />
+            <a rel="noopener noreferrer" target="_blank" href={url}>
+                {text}
+            </a>
+        </React.Fragment>
     );
 }
 
