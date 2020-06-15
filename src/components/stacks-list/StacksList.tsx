@@ -239,9 +239,18 @@ const columns: TableColumn<D2Stack>[] = [
         name: "url" as const,
         text: i18n.t("URL"),
         sortable: true,
+        getValue: (stack: D2Stack) => (stack.url ? link(stack.url, stack.url) : "-"),
     },
     { name: "status" as const, text: i18n.t("Status"), sortable: false },
 ];
+
+function link(text: string, url: string): ReactNode {
+    return (
+        <a rel="noopener noreferrer" target="_blank" href={url}>
+            {text}
+        </a>
+    );
+}
 
 const otherDetails: ObjectsTableDetailField<D2Stack>[] = [
     {
