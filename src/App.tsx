@@ -8,6 +8,8 @@ import { CompositionRoot } from "./CompositionRoot";
 import { PortainerApi } from "./data/PortainerApi";
 import { match } from "./utils/tagged-union";
 import { CircularProgress } from "@material-ui/core";
+import config from "./config";
+import { initFeedbackTool } from "./utils/feedback-tool";
 
 interface AppProps {
     portainerUrl: string;
@@ -27,6 +29,8 @@ const App: React.FC<AppProps> = React.memo(props => {
     }, [portainerUrl]);
 
     const [state, setState] = React.useState<State>({ type: "getFromSession" });
+
+    React.useEffect(() => initFeedbackTool(config.feedback, window as any), []);
 
     React.useEffect(() => {
         if (state.type === "getFromSession") {
