@@ -7,9 +7,10 @@ import { SnackbarProvider } from "d2-ui-components";
 import { getDefaultCompositionRoot } from "./CompositionRoot";
 import { PortainerApi } from "./data/PortainerApi";
 import { match } from "./utils/tagged-union";
-import { CircularProgress } from "@material-ui/core";
+import { CircularProgress, MuiThemeProvider } from "@material-ui/core";
 import config from "./config";
 import { initFeedbackTool } from "./utils/feedback-tool";
+import { muiTheme } from "./dhis2.theme";
 
 interface AppProps {
     portainerUrl: string;
@@ -49,15 +50,17 @@ const App: React.FC<AppProps> = React.memo(props => {
     const userSession = state.type === "loggedIn" ? state.userSession : null;
 
     return (
-        <AppContextProvider compositionRoot={compositionRoot} userSession={userSession}>
-            <SnackbarProvider>
-                {match(state, {
-                    getFromSession: () => <CircularProgress />,
-                    askAuth: () => <LoginPage setUserSession={setUserSession} />,
-                    loggedIn: () => <RootPage onLogout={logout} />,
-                })}
-            </SnackbarProvider>
-        </AppContextProvider>
+        <MuiThemeProvider theme={muiTheme}>
+            <AppContextProvider compositionRoot={compositionRoot} userSession={userSession}>
+                <SnackbarProvider>
+                    {match(state, {
+                        getFromSession: () => <CircularProgress />,
+                        askAuth: () => <LoginPage setUserSession={setUserSession} />,
+                        loggedIn: () => <RootPage onLogout={logout} />,
+                    })}
+                </SnackbarProvider>
+            </AppContextProvider>
+        </MuiThemeProvider>
     );
 });
 
