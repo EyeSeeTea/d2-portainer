@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import _ from "lodash";
 
 import { Either } from "../utils/Either";
@@ -48,22 +48,34 @@ export class PortainerApi {
         baseRequest: AxiosRequestConfig = {},
         token?: string
     ): PromiseRes<T> {
-        const token2 = token || this.token;
+        const token2 = token || (this.state.type === "logged" ? this.state.token : null);
         const request = { ...baseRequest, method, url: this.getUrl(url) };
+        let response: AxiosResponse;
 
-        const response = await axios({
-            method: "GET",
-            headers: { Authorization: `Bearer ${token2}` },
-            validateStatus: _status => true,
-            ...request,
-        });
+        try {
+            response = await axios({
+                method: "GET",
+                headers: token2 ? { Authorization: `Bearer ${token2}` } : {},
+                validateStatus: _status => true,
+                ...request,
+            });
+        } catch (err) {
+            return Either.error(err ? err.message || err.toString() : "Unknown error");
+        }
         const { status, data } = response;
 
         if ((status >= 200 && status < 300) || [304].includes(status)) {
             return Either.success(data as T);
         } else {
-            const { message, details } = data;
-            const msg = _.compact([message, details]).join(": ") || JSON.stringify(response.data);
+            let msg;
+            if (typeof data === "string") {
+                msg = data.trim();
+            } else if (typeof data === "object") {
+                const { message, details } = data;
+                msg = _.compact([message, details]).join(": ") || JSON.stringify(response.data);
+            } else {
+                msg = "Unknown error";
+            }
             const fullMsg = _.compact([status, msg]).join(" - ");
             return Either.error(fullMsg);
         }
@@ -102,36 +114,29 @@ export class PortainerApi {
         endpointName: string;
     }): PromiseRes<PortainerApi> {
         const { username, password, endpointName } = options;
-        const { baseUrl } = this.options;
         const data = { Username: username, Password: password };
-        const response = await axios({
-            method: "POST",
-            url: `${baseUrl}/api/auth`,
-            data,
-            validateStatus: _status => true,
-        });
-        const loginResponse = response.data as LoginResponse;
+        const loginResponse = await this.request<LoginResponseSuccess>("POST", "/auth", { data });
 
-        if (isSuccessfulLogin(loginResponse)) {
-            const token = loginResponse.jwt;
-            const endpointsRes = await this.request<Endpoint[]>("GET", "/endpoints", {}, token);
-            return endpointsRes.flatMap(endpoints => {
-                const endpoint = endpoints.find(endpoint => endpoint.Name === endpointName);
-                if (endpoint) {
-                    const newState: State = { type: "logged", token, endpointId: endpoint.Id };
-                    const newApi = new PortainerApi(this.options, newState);
-                    return Either.success(newApi);
-                } else {
-                    return Either.error(`Cannot find endpoint: name=${endpointName}`);
-                }
-            });
-        } else if (isErrorLogin(loginResponse)) {
-            const parts = [loginResponse.message, loginResponse.details];
-            const msg = _.compact(parts).join(" - ") || "Cannot login";
-            return Either.error(msg);
-        } else {
-            return Either.error("Cannot connect to API");
-        }
+        return loginResponse.match({
+            error: msg => Promise.resolve(Either.error(msg)),
+            success: async loginResponse => {
+                const token = loginResponse.jwt;
+                const endpointsRes = await this.request<Endpoint[]>("GET", "/endpoints", {}, token);
+
+                return endpointsRes.flatMap(endpoints => {
+                    const endpoint = endpoints.find(endpoint => endpoint.Name === endpointName);
+                    if (endpoint) {
+                        const newState: State = { type: "logged", token, endpointId: endpoint.Id };
+                        const newApi = new PortainerApi(this.options, newState);
+                        return Either.success(newApi);
+                    } else {
+                        return Either.error<string, PortainerApi>(
+                            `Cannot find endpoint '${endpointName}'`
+                        );
+                    }
+                });
+            },
+        });
     }
 
     async startContainer(containerId: string): PromiseRes<void> {
@@ -193,15 +198,4 @@ export class PortainerApi {
     async getUsers(): PromiseRes<User[]> {
         return this.request("GET", `/users`);
     }
-}
-
-function isSuccessfulLogin(loginResponse: LoginResponse): loginResponse is LoginResponseSuccess {
-    return (loginResponse as LoginResponseSuccess).jwt !== undefined;
-}
-
-function isErrorLogin(loginResponse: LoginResponse): loginResponse is LoginResponseError {
-    return (
-        (loginResponse as LoginResponseError).message !== undefined &&
-        (loginResponse as LoginResponseError).details !== undefined
-    );
 }
