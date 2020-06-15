@@ -1,4 +1,9 @@
-import { D2NewStack } from "../domain/entities/D2NewStack";
+import {
+    D2NewStack,
+    getUrlFromStringPort,
+    getBranch,
+    getPort,
+} from "../domain/entities/D2NewStack";
 import { PostStackRequest, Permission, Stack, Container } from "./PortainerApiTypes";
 import _ from "lodash";
 import { D2Stack } from "./../domain/entities/D2Stack";
@@ -32,13 +37,9 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         const baseName = "d2-docker" + d2NewStack.dataImage.replace(/dhis2-data/, "");
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
-        const branchFromPort = _(config.urlMappings)
-            .map(mapping => [mapping.port, mapping.name] as [number, string])
-            .fromPairs()
-            .value();
-        const branch = d2NewStack.port ? branchFromPort[d2NewStack.port] : null;
+        const branch = getBranch(d2NewStack);
         if (!branch) return Either.error("Cannot get granch");
-        const port = d2NewStack.port;
+        const port = getPort(d2NewStack);
         if (!port) return Either.error("Cannot get port");
 
         const postStackRequest: PostStackRequest = {
@@ -157,21 +158,22 @@ function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | un
         db: containersByService["db"],
     };
 
-    if (!_.every(containers)) return;
-
     const env = _(apiStack.Env)
         .map(env => [env.name, env.value] as [string, string])
         .fromPairs()
         .value();
 
     const acl = getAcl(apiStack);
+    const url = getUrlFromStringPort(env["PORT"]);
+
+    if (!_.every(containers) || !url) return;
 
     const stack: D2Stack = {
         resourceId: apiStack.ResourceControl.Id,
         id: apiStack.Id.toString(),
         dataImage: env["DHIS2_DATA_IMAGE"],
         coreImage: env["DHIS2_CORE_IMAGE"],
-        port: env["PORT"] ? parseInt(env["PORT"]) : 8080,
+        url,
         state: _(containers).some(c => c.State === "running") ? "running" : "stopped",
         status: containers.core.Status || "Unknown",
         containers: _.mapValues(containers, c => ({ id: c.Id, image: c.Image })),

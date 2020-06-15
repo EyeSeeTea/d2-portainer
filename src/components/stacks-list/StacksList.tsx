@@ -24,13 +24,12 @@ import { useLoggedAppContext } from "../AppContext";
 import { StackStats } from "../stack-stats/StackStats";
 import { showSnackbar } from "../../utils/react-feedback";
 import { LinearProgress, makeStyles } from "@material-ui/core";
-import config from "../../config";
 
-// const refreshRate = 10;
+const refreshRate = 10;
 
 interface StacksListProps {}
 
-export const StacksList: React.FC<StacksListProps> = React.memo(props => {
+export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const { compositionRoot } = useLoggedAppContext();
     const [stacks, setStacks] = React.useState<D2Stack[]>([]);
     const [search, setSearch] = React.useState<string>("");
@@ -59,13 +58,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
 
     React.useEffect(() => {
         getStacks();
-        const intervalId = setInterval(getStacks, 10 * 1000);
+        const intervalId = setInterval(getStacks, refreshRate * 1000);
         return () => clearInterval(intervalId);
     }, [getStacks]);
-
-    React.useEffect(() => {
-        setStacks(D2StackMethods.filterStacks(stacks, search));
-    }, [search, stacks]);
 
     const stop = React.useCallback(
         withProgress((ids: string[]) => {
@@ -174,13 +169,18 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
         setStackStats(undefined);
     }, [setStackStats]);
 
+    const filteredStacks = React.useMemo(() => D2StackMethods.filterStacks(stacks, search), [
+        stacks,
+        search,
+    ]);
+
     return (
         <div className={classes.table}>
             {stackStats && <StackStats stack={stackStats} onClose={closeStats} />}
             {actionActive && <LinearProgress className={classes.linearProgress} />}
 
             <ObjectsTable<D2Stack>
-                rows={stacks}
+                rows={filteredStacks}
                 columns={columns}
                 details={details}
                 actions={actions}
@@ -194,26 +194,16 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
     );
 });
 
-const urlFromPorts = _(config.urlMappings)
-    .map(mapping => [mapping.port, mapping.url] as [number, string])
-    .fromPairs()
-    .value();
-
 const columns: TableColumn<D2Stack>[] = [
     { name: "dataImage" as const, text: i18n.t("Name"), sortable: true },
     { name: "state" as const, text: i18n.t("State"), sortable: true },
     {
-        name: "port" as const,
+        name: "url" as const,
         text: i18n.t("URL"),
         sortable: true,
-        getValue: getUrlFromStack,
     },
     { name: "status" as const, text: i18n.t("Status"), sortable: false },
 ];
-
-function getUrlFromStack(stack: D2Stack): string {
-    return (stack.port ? urlFromPorts[stack.port] : null) || "-";
-}
 
 const otherDetails: ObjectsTableDetailField<D2Stack>[] = [
     {

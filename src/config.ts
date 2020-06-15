@@ -1,4 +1,4 @@
-const config = {
+const config: Config = {
     appName: "WHO D2 Portainer",
     endpointName: "local",
     dockerComposeRepository: {
@@ -12,5 +12,21 @@ const config = {
         { url: "http://localhost:8082", port: 8082, name: "master" },
     ],
 };
+
+export interface Config {
+    appName: string;
+    endpointName: string;
+    dockerComposeRepository: {
+        url: string;
+        path: string;
+    };
+    urlMappings: UrlMapping[];
+}
+
+export interface UrlMapping {
+    url: string;
+    port: number;
+    name: string;
+}
 
 export default config;

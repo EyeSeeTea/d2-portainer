@@ -46,7 +46,7 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
 const defaultInitialStack: D2NewStack = {
     dataImage: "",
     coreImage: "",
-    port: 8080,
+    url: undefined,
     access: "restricted",
     teamIds: [],
     userIds: [],
@@ -55,7 +55,7 @@ const defaultInitialStack: D2NewStack = {
 const debugInitialStack: D2NewStack = {
     dataImage: "eyeseetea/dhis2-data:2.32-empty1",
     coreImage: "eyeseetea/dhis2-core:2.32",
-    port: 8081,
+    url: "http://localhost:8080/dhis2",
     access: "restricted",
     teamIds: [],
     userIds: [],

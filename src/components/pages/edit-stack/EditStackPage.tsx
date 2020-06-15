@@ -15,7 +15,7 @@ interface EditStackPageProps {
 const disabledFields: Array<keyof D2NewStack> = [
     "dataImage" as const,
     "coreImage" as const,
-    "port" as const,
+    "url" as const,
 ];
 
 export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {

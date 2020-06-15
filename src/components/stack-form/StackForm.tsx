@@ -102,10 +102,10 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
                 <FormSelectField
                     label={i18n.t("URL")}
-                    onChange={port => setStack({ ...stack, port: parseInt(port) })}
+                    onChange={url => setStack({ ...stack, url })}
                     options={urlMappingOptions}
-                    value={stack.port?.toString()}
-                    disabled={disabledFields.includes("port")}
+                    value={stack.url}
+                    disabled={disabledFields.includes("url")}
                 />
 
                 <FormSelectField
@@ -173,7 +173,7 @@ const accessOptions: Array<{ value: Access; label: string }> = [
 ];
 
 const urlMappingOptions = config.urlMappings.map(mapping => ({
-    value: mapping.port.toString(),
+    value: mapping.url,
     label: mapping.url,
 }));
 
