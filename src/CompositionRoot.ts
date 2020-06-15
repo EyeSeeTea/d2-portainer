@@ -48,7 +48,7 @@ export class CompositionRoot {
     public get stacks() {
         return getExecute({
             get: new GetD2Stacks(this.stacksRepository),
-            getEdit: new GetD2Stack(this.stacksRepository),
+            getById: new GetD2Stack(this.stacksRepository),
             start: new StartD2Stacks(this.stacksRepository),
             stop: new StopD2Stacks(this.stacksRepository),
             create: new CreateD2Stacks(this.stacksRepository),

@@ -180,7 +180,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(props => {
 });
 
 const columns: TableColumn<D2Stack>[] = [
-    { name: "name" as const, text: i18n.t("Name"), sortable: true },
+    { name: "dataImage" as const, text: i18n.t("Name"), sortable: true },
     { name: "state" as const, text: i18n.t("State"), sortable: true },
     {
         name: "port" as const,

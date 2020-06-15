@@ -7,7 +7,7 @@ import { PortainerApi } from "./PortainerApi";
 import { Either } from "../utils/Either";
 import config from "../config";
 import { PromiseRes } from "../utils/types";
-import { D2EditStack } from "../domain/entities/D2EditStack";
+import { Acl } from "../domain/entities/Acl";
 
 export class D2StacksPortainerRepository implements D2StacksRepository {
     constructor(public api: PortainerApi) {}
@@ -36,10 +36,12 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             .map(mapping => [mapping.port, mapping.name] as [number, string])
             .fromPairs()
             .value();
-        const branch = branchFromPort[d2NewStack.port];
+        const branch = d2NewStack.port ? branchFromPort[d2NewStack.port] : null;
         if (!branch) return Either.error("Cannot get granch");
+        const port = d2NewStack.port;
+        if (!port) return Either.error("Cannot get port");
 
-        const newStackApi: PostStackRequest = {
+        const postStackRequest: PostStackRequest = {
             Name: name,
             RepositoryURL: repo.url,
             RepositoryReferenceName: `refs/heads/${branch}`,
@@ -47,35 +49,34 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             Env: [
                 { name: "DHIS2_DATA_IMAGE", value: d2NewStack.dataImage },
                 { name: "DHIS2_CORE_IMAGE", value: d2NewStack.coreImage },
-                { name: "PORT", value: d2NewStack.port.toString() },
+                { name: "PORT", value: port.toString() },
             ],
         };
 
-        const res = await this.api.createStack(newStackApi);
+        const res = await this.api.createStack(postStackRequest);
 
         return res.match({
             error: msg => Promise.resolve(Either.error(msg)),
             success: res => {
-                const d2EditStack = { ...d2NewStack, resourceId: res.ResourceControl.Id };
-                return this.setPermissions(d2EditStack);
+                return this.saveAcl(res.ResourceControl.Id, d2NewStack);
             },
         });
     }
 
-    async update(d2EditStack: D2EditStack): PromiseRes<void> {
-        return this.setPermissions(d2EditStack);
+    async update(d2EditStack: D2Stack): PromiseRes<void> {
+        return this.saveAcl(d2EditStack.resourceId, d2EditStack);
     }
 
-    private async setPermissions(d2EditStack: D2EditStack): PromiseRes<void> {
-        const adminOnly = d2EditStack.access === "admin";
+    private async saveAcl(resourceId: number, acl: Acl): PromiseRes<void> {
+        const adminOnly = acl.access === "admin";
         const permission: Permission = {
             AdministratorsOnly: adminOnly,
             Public: false,
-            Users: adminOnly ? [] : d2EditStack.userIds,
-            Teams: adminOnly ? [] : d2EditStack.teamIds,
+            Users: adminOnly ? [] : acl.userIds,
+            Teams: adminOnly ? [] : acl.teamIds,
         };
 
-        return this.api.setPermission(d2EditStack.resourceId, permission);
+        return this.api.setPermission(resourceId, permission);
     }
 
     getStatsUrls(stack: D2Stack): D2StackStats {
@@ -84,38 +85,6 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             stack.containers,
             container => `${baseUrl}/#/containers/${container.id}/stats`
         );
-    }
-
-    async getEditStack(id: string): PromiseRes<D2EditStack> {
-        const res = await this.api.getStack(parseInt(id));
-        return res.map(stackApi => {
-            const env = _(stackApi.Env)
-                .map(env => [env.name, env.value] as [string, string])
-                .fromPairs()
-                .value();
-            const userIds = _(stackApi.ResourceControl.UserAccesses)
-                .filter(ua => ua.AccessLevel === 1)
-                .map(ua => ua.UserId)
-                .compact()
-                .value();
-            const teamIds = _(stackApi.ResourceControl.TeamAccesses)
-                .filter(ua => ua.AccessLevel === 1)
-                .map(ua => ua.TeamId)
-                .compact()
-                .value();
-
-            const stack: D2EditStack = {
-                resourceId: stackApi.ResourceControl.Id,
-                dataImage: env["DHIS2_DATA_IMAGE"],
-                coreImage: env["DHIS2_CORE_IMAGE"],
-                port: env["PORT"] ? parseInt(env["PORT"]) : 8080,
-                access: stackApi.ResourceControl.AdministratorsOnly ? "admin" : "restricted",
-                userIds,
-                teamIds,
-            };
-
-            return stack;
-        });
     }
 
     async getById(id: string): PromiseRes<D2Stack> {
@@ -147,6 +116,27 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     }
 }
 
+function getAcl(apiStack: Stack) {
+    const userIds = _(apiStack.ResourceControl.UserAccesses)
+        .filter(ua => ua.AccessLevel === 1)
+        .map(ua => ua.UserId)
+        .compact()
+        .value();
+    const teamIds = _(apiStack.ResourceControl.TeamAccesses)
+        .filter(ua => ua.AccessLevel === 1)
+        .map(ua => ua.TeamId)
+        .compact()
+        .value();
+
+    const acl: Acl = {
+        access: apiStack.ResourceControl.AdministratorsOnly ? "admin" : "restricted",
+        userIds,
+        teamIds,
+    };
+
+    return acl;
+}
+
 function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | undefined {
     const apiContainersForGroup = _(apiContainers)
         .filter(c => c.Labels["com.docker.compose.project"] === apiStack.Name)
@@ -164,13 +154,23 @@ function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | un
 
     if (!_.every(containers)) return;
 
+    const env = _(apiStack.Env)
+        .map(env => [env.name, env.value] as [string, string])
+        .fromPairs()
+        .value();
+
+    const acl = getAcl(apiStack);
+
     const stack: D2Stack = {
+        resourceId: apiStack.ResourceControl.Id,
         id: apiStack.Id.toString(),
-        name: apiStack.Name,
-        port: containers.gateway.Ports[0]?.PublicPort,
+        dataImage: env["DHIS2_DATA_IMAGE"],
+        coreImage: env["DHIS2_CORE_IMAGE"],
+        port: env["PORT"] ? parseInt(env["PORT"]) : 8080,
         state: _(containers).some(c => c.State === "running") ? "running" : "stopped",
         status: containers.core.Status || "Unknown",
         containers: _.mapValues(containers, c => ({ id: c.Id, image: c.Image })),
+        ...acl,
     };
 
     return stack;

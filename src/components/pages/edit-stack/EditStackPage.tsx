@@ -6,7 +6,7 @@ import PageHeader from "../../page-header/PageHeader";
 import { StackForm } from "../../stack-form/StackForm";
 import { useAppContext } from "../../AppContext";
 import { CircularProgress } from "@material-ui/core";
-import { D2EditStack } from "../../../domain/entities/D2EditStack";
+import { D2Stack } from "../../../domain/entities/D2Stack";
 import { D2NewStack } from "../../../domain/entities/D2NewStack";
 
 interface EditStackPageProps {
@@ -25,7 +25,7 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const snackbar = useSnackbar();
     const [isCloseDialogOpen, setCloseDialogOpen] = React.useState(false);
     const goToList = React.useCallback(() => history.push("/"), [history]);
-    const [stack, setStack] = React.useState<D2EditStack | undefined>();
+    const [stack, setStack] = React.useState<D2Stack | undefined>();
     const [formChanged, setFormChanged] = React.useState(false);
 
     const requestGoToList = React.useCallback(() => {
@@ -33,7 +33,7 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     }, [formChanged, setCloseDialogOpen, goToList]);
 
     React.useEffect(() => {
-        compositionRoot.stacks.getEdit(props.id).then(res =>
+        compositionRoot.stacks.getById(props.id).then(res =>
             res.match({
                 success: setStack,
                 error: msg => {
@@ -46,7 +46,7 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     }, [compositionRoot, snackbar, goToList, props.id]);
 
     const update = React.useCallback(
-        (stack: D2EditStack) => {
+        (stack: D2Stack) => {
             return compositionRoot.stacks.update(stack).then(res =>
                 res.match({
                     success: () => {
@@ -76,7 +76,7 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
             <PageHeader title={title} onBackClick={requestGoToList} helpText={undefined} />
 
             {stack ? (
-                <StackForm<D2EditStack>
+                <StackForm<D2Stack>
                     saveButtonLabel={i18n.t("Save")}
                     onSave={update}
                     disabledFields={disabledFields}

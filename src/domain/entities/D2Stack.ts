@@ -1,13 +1,16 @@
 import _ from "lodash";
 import { Container } from "./Container";
+import { Acl } from "./Acl";
 
-export interface D2Stack {
+export interface D2Stack extends Acl {
     id: string;
-    name: string;
-    port?: number;
+    port: number | undefined;
+    dataImage: string;
+    coreImage: string;
     state: State;
     status: string;
     containers: Record<ContainerType, Container>;
+    resourceId: number;
 }
 
 export type ContainerType = "core" | "gateway" | "db";
@@ -20,7 +23,7 @@ export class D2StackMethods {
     static filterStacks(stacks: D2Stack[], search: string): D2Stack[] {
         const searchLowerCase = search.trim().toLowerCase();
         return searchLowerCase
-            ? stacks.filter(stack => stack.name.toLowerCase().includes(searchLowerCase))
+            ? stacks.filter(stack => stack.dataImage.toLowerCase().includes(searchLowerCase))
             : stacks;
     }
 

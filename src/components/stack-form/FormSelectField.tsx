@@ -7,7 +7,7 @@ export type Option = { value: string; label: string };
 
 interface FormSelectFieldProps {
     label: string;
-    value: Value;
+    value: Value | undefined;
     options: Option[];
     onChange(value: Value): void;
     disabled?: boolean;

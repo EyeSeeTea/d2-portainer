@@ -101,7 +101,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
                     label={i18n.t("URL")}
                     onChange={port => setStack({ ...stack, port: parseInt(port) })}
                     options={urlMappingOptions}
-                    value={stack.port.toString()}
+                    value={stack.port?.toString()}
                     disabled={disabledFields.includes("port")}
                 />
 

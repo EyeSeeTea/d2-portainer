@@ -15,7 +15,7 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
     const { stack, onClose } = props;
     const { compositionRoot } = useLoggedAppContext();
     const classes = useStyles();
-    const title = i18n.t("Stats: ") + stack.name;
+    const title = i18n.t("Stats: ") + stack.dataImage;
     const stats = compositionRoot.stacks.getStats(stack);
 
     return (

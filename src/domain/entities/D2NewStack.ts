@@ -1,10 +1,9 @@
-export interface D2NewStack {
+import { Acl } from "./Acl";
+
+export interface D2NewStack extends Acl {
+    port: number | undefined;
     dataImage: string;
     coreImage: string;
-    port: number;
-    access: "restricted" | "admin";
-    teamIds: number[];
-    userIds: number[];
 }
 
 export function setCoreImageFromData<S extends D2NewStack>(stack: S, newDataImage: string): S {
