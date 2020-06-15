@@ -67,7 +67,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const getStacks = React.useCallback(() => {
         compositionRoot.stacks
             .get()
-            .then(showSnackbar(snackbar, { message: "", action: setStacks }));
+            .then(showSnackbar(compositionRoot, snackbar, { message: "", action: setStacks }));
     }, [compositionRoot, snackbar]);
 
     React.useEffect(() => {
@@ -81,7 +81,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
             const stacksToStop = D2StackMethods.getById(stacks, ids);
             return compositionRoot.stacks
                 .stop(stacksToStop)
-                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) stopped") }));
+                .then(
+                    showSnackbar(compositionRoot, snackbar, { message: i18n.t("Stack(s) stopped") })
+                );
         }),
         [compositionRoot, stacks, snackbar]
     );
@@ -89,9 +91,11 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const start = React.useCallback(
         withProgress((ids: string[]) => {
             const stacksToStart = D2StackMethods.getById(stacks, ids);
-            return compositionRoot.stacks
-                .start(stacksToStart)
-                .then(showSnackbar(snackbar, { message: i18n.t("Stack(s) started") }));
+            return compositionRoot.stacks.start(stacksToStart).then(
+                showSnackbar(compositionRoot, snackbar, {
+                    message: i18n.t("Stack(s) started"),
+                })
+            );
         }),
         [compositionRoot, stacks, snackbar]
     );
@@ -99,7 +103,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const delete_ = React.useCallback(
         withProgress(() => {
             return compositionRoot.stacks.delete(stacksToDelete.map(stack => stack.id)).then(
-                showSnackbar(snackbar, {
+                showSnackbar(compositionRoot, snackbar, {
                     message: i18n.t("Stack(s) deleted"),
                     action: () => setStacksToDelete([]),
                 })

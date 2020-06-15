@@ -38,7 +38,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
         const branch = getBranch(d2NewStack);
-        if (!branch) return Either.error("Cannot get granch");
+        if (!branch) return Either.error("Url not specified");
         const port = getPort(d2NewStack);
         if (!port) return Either.error("Cannot get port");
 

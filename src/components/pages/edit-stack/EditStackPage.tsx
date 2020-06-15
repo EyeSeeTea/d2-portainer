@@ -26,13 +26,15 @@ export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const [stack, setStack] = React.useState<D2Stack | undefined>();
 
     React.useEffect(() => {
-        compositionRoot.stacks.getById(props.id).then(showSnackbar(snackbar, { action: setStack }));
+        compositionRoot.stacks
+            .getById(props.id)
+            .then(showSnackbar(compositionRoot, snackbar, { action: setStack }));
     }, [compositionRoot, snackbar, goToList, props.id]);
 
     const update = React.useCallback(
         (stack: D2Stack) => {
             return compositionRoot.stacks.update(stack).then(
-                showSnackbar(snackbar, {
+                showSnackbar(compositionRoot, snackbar, {
                     message: i18n.t("Stack updated"),
                     action: () => {
                         goToList();

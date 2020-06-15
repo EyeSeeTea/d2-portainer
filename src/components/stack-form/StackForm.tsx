@@ -48,7 +48,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
     React.useEffect(() => {
         compositionRoot.memberships.get().then(
-            showSnackbar(snackbar, {
+            showSnackbar(compositionRoot, snackbar, {
                 action: ({ teams, users }) => {
                     setOptions({ teams: getOptions(teams), users: getOptions(users) });
                 },
@@ -82,6 +82,8 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
         });
     }, [stack, onSave]);
 
+    const isFormValid = stack.dataImage && stack.coreImage && stack.url;
+
     return (
         <Card>
             <CardContent className={classes.form}>
@@ -104,7 +106,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
                     label={i18n.t("URL")}
                     onChange={url => setStack({ ...stack, url })}
                     options={urlMappingOptions}
-                    value={stack.url}
+                    value={stack.url || ""}
                     disabled={disabledFields.includes("url")}
                 />
 
@@ -139,7 +141,11 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
 
                 <div className={classes.button}>
                     <div>
-                        <FormButton label={saveButtonLabel} onClick={save} isDisabled={isSaving} />
+                        <FormButton
+                            label={saveButtonLabel}
+                            onClick={save}
+                            isDisabled={!isFormValid || isSaving}
+                        />
                         <FormButton label={i18n.t("Cancel")} onClick={onCancelRequest} />
                         {isSaving && <CircularProgress size={30} />}
                     </div>

@@ -18,7 +18,7 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const save = React.useCallback(
         (stack: D2NewStack) => {
             return compositionRoot.stacks.create(stack).then(
-                showSnackbar(snackbar, {
+                showSnackbar(compositionRoot, snackbar, {
                     message: i18n.t(`Stack created: ${stack.dataImage}`),
                     action: () => {
                         goToList();
