@@ -4,7 +4,7 @@ import { LoginPage } from "./components/pages/LoginPage";
 import { UserSession } from "./domain/entities/UserSession";
 import { RootPage } from "./components/pages/RootPage";
 import { SnackbarProvider } from "d2-ui-components";
-import { CompositionRoot } from "./CompositionRoot";
+import { getDefaultCompositionRoot } from "./CompositionRoot";
 import { PortainerApi } from "./data/PortainerApi";
 import { match } from "./utils/tagged-union";
 import { CircularProgress } from "@material-ui/core";
@@ -25,7 +25,7 @@ const App: React.FC<AppProps> = React.memo(props => {
 
     const compositionRoot = React.useMemo(() => {
         const portainerApi = new PortainerApi({ baseUrl: portainerUrl });
-        return new CompositionRoot({ portainerApi });
+        return getDefaultCompositionRoot({ portainerApi });
     }, [portainerUrl]);
 
     const [state, setState] = React.useState<State>({ type: "getFromSession" });

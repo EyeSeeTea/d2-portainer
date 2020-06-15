@@ -21,49 +21,51 @@ import { LoginUserFromSession } from "./domain/usecases/LoginUserFromSession";
 import { UpdateD2Stacks } from "./domain/usecases/UpdateD2Stack";
 import { DeleteD2Stacks } from "./domain/usecases/DeleteD2Stacks";
 
+export function getDefaultCompositionRoot(options: {
+    portainerApi: PortainerApi;
+}): CompositionRoot {
+    const { portainerApi } = options;
+
+    return new CompositionRoot(
+        new DataSourcePortainerRepository(portainerApi),
+        new D2StacksPortainerRepository(portainerApi),
+        new SessionBrowserStorageRepository(),
+        new MembershipPortainerRepository(portainerApi)
+    );
+}
+
 export class CompositionRoot {
-    dataSourceRepository: DataSourceRepository;
-    stacksRepository: D2StacksRepository;
-    sessionRepository: SessionRepository;
-    membershipsRepository: MembershipRepository;
+    constructor(
+        private dataSourceRepository: DataSourceRepository,
+        private stacksRepository: D2StacksRepository,
+        private sessionRepository: SessionRepository,
+        private membershipsRepository: MembershipRepository
+    ) {}
 
-    constructor(public options: { portainerApi: PortainerApi }) {
-        this.dataSourceRepository = new DataSourcePortainerRepository(this.options.portainerApi);
-        this.stacksRepository = new D2StacksPortainerRepository(this.options.portainerApi);
-        this.membershipsRepository = new MembershipPortainerRepository(this.options.portainerApi);
-        this.sessionRepository = new SessionBrowserStorageRepository();
-    }
+    dataSource = getExecute({
+        login: new LoginUser(this.dataSourceRepository, this.sessionRepository),
+        loginFromSession: new LoginUserFromSession(
+            this.dataSourceRepository,
+            this.sessionRepository
+        ),
+        logout: new LogoutUser(this.sessionRepository),
+        info: new GetDataSourceInfo(this.dataSourceRepository),
+    });
 
-    public get dataSource() {
-        return getExecute({
-            login: new LoginUser(this.dataSourceRepository, this.sessionRepository),
-            loginFromSession: new LoginUserFromSession(
-                this.dataSourceRepository,
-                this.sessionRepository
-            ),
-            logout: new LogoutUser(this.sessionRepository),
-            info: new GetDataSourceInfo(this.dataSourceRepository),
-        });
-    }
+    stacks = getExecute({
+        get: new GetD2Stacks(this.stacksRepository),
+        getById: new GetD2Stack(this.stacksRepository),
+        start: new StartD2Stacks(this.stacksRepository),
+        stop: new StopD2Stacks(this.stacksRepository),
+        delete: new DeleteD2Stacks(this.stacksRepository),
+        create: new CreateD2Stacks(this.stacksRepository),
+        update: new UpdateD2Stacks(this.stacksRepository),
+        getStats: new GetD2StackStats(this.stacksRepository),
+    });
 
-    public get stacks() {
-        return getExecute({
-            get: new GetD2Stacks(this.stacksRepository),
-            getById: new GetD2Stack(this.stacksRepository),
-            start: new StartD2Stacks(this.stacksRepository),
-            stop: new StopD2Stacks(this.stacksRepository),
-            delete: new DeleteD2Stacks(this.stacksRepository),
-            create: new CreateD2Stacks(this.stacksRepository),
-            update: new UpdateD2Stacks(this.stacksRepository),
-            getStats: new GetD2StackStats(this.stacksRepository),
-        });
-    }
-
-    public get memberships() {
-        return getExecute({
-            get: new GetMembershipsMetadata(this.membershipsRepository),
-        });
-    }
+    memberships = getExecute({
+        get: new GetMembershipsMetadata(this.membershipsRepository),
+    });
 }
 
 interface UseCase {
