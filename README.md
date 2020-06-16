@@ -4,7 +4,7 @@ Control d2-docker containers using portainer
 
 ### Portainer
 
-Download and start a portainer instance on http://localhost:9000 (agent at :8000) with user `admin/123123123`:
+Download and start a portainer instance on http://localhost:9000 (agent at :8000) with user `admin/123123123` ( `htpasswd` is an Apache helper tool):
 
 ```
 $ wget https://github.com/portainer/portainer/releases/latest/download/portainer-1.24.0-linux-amd64.tar.gz
