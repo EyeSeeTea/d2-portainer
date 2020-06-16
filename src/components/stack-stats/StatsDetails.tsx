@@ -37,7 +37,11 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                 const { localStorage } = iframe.contentWindow;
                 localStorage["portainer.JWT"] = JSON.stringify(currentUser.token);
                 localStorage["portainer.ENDPOINT_ID"] = JSON.stringify(currentUser.endpointId);
-                iframe.contentWindow.location.replace(url);
+                const location = iframe.contentWindow.location;
+                setTimeout(() => {
+                    location.replace(url + "#" + new Date().getTime());
+                    login();
+                }, 1000);
             } else {
                 on(idocument, "#sideview", el => remove(el));
                 on(idocument, "#page-wrapper", el => (el.style.paddingLeft = "0px"));
