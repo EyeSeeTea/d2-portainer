@@ -1,9 +1,7 @@
 import React from "react";
-import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import MuiContainer from "@material-ui/core/Container";
@@ -12,7 +10,7 @@ import { useAppContext } from "../AppContext";
 import { UserSession } from "../../domain/entities/UserSession";
 import { i18n } from "../../i18n";
 import { Grow } from "@material-ui/core";
-
+import logoImage from "../../images/D2-Docker-Logo.png";
 import config from "../../config";
 
 /* From https://react.school/material-ui/templates */
@@ -83,14 +81,11 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
             <CssBaseline />
 
             <div className={classes.paper}>
-                <Avatar className={classes.avatar}>
-                    <LockOutlinedIcon />
-                </Avatar>
+                <img src={logoImage} alt="Logo" width="100" height="100" />
 
                 <Typography component="h1" variant="h5">
                     {config.appName} - {i18n.t("Sign in")}
                 </Typography>
-
                 <div className={classes.form}>
                     <TextField
                         variant="outlined"
