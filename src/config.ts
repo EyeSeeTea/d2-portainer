@@ -1,4 +1,4 @@
-import { FeedbackToolOptions } from "./utils/feedback-tool";
+import { Config } from "./config.types";
 
 const config: Config = {
     appName: "WHO D2 Portainer",
@@ -31,22 +31,5 @@ const config: Config = {
         },
     },
 };
-
-export interface Config {
-    appName: string;
-    endpointName: string;
-    dockerComposeRepository: {
-        url: string;
-        path: string;
-    };
-    urlMappings: UrlMapping[];
-    feedback: FeedbackToolOptions;
-}
-
-export interface UrlMapping {
-    url: string;
-    port: number;
-    name: string;
-}
 
 export default config;
