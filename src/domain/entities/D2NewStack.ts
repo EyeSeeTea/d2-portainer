@@ -1,4 +1,4 @@
-import { UrlMapping } from "./../../config";
+import { UrlMapping } from "../../config.types";
 import { Acl } from "./Acl";
 import _ from "lodash";
 import config from "../../config";
