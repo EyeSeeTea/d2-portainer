@@ -1,7 +1,7 @@
-import { UrlMapping } from "./../../config";
 import { Acl } from "./Acl";
 import _ from "lodash";
 import config from "../../config";
+import { UrlMapping } from "../../config.types";
 
 export interface D2NewStack extends Acl {
     url: string | undefined;
