@@ -30,7 +30,8 @@ export class PortainerApi {
     public state: State;
 
     constructor(public options: ConstructorOptions, state?: State) {
-        this.apiUrl = `${options.baseUrl}/api`;
+        const baseUrl = options.baseUrl.replace(/\/*$/, "");
+        this.apiUrl = `${baseUrl}/api`;
         this.state = state || { type: "not-logged" };
     }
 
