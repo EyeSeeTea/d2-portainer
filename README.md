@@ -38,6 +38,7 @@ $ chown -R user:user /path/to/portainer-folder
 ```
 
 Installing supervisor
+
 ```
 $ yum install supervisor
 or
@@ -47,12 +48,14 @@ $ sudo service supervisord start
 ```
 
 Reloading config
+
 ```
 $ sudo supervisorctl reload
 $ sudo supervisorctl status
 ```
 
 Should answer with status as follows:
+
 ```
 # supervisorctl status
 portainer                        RUNNING   pid 1162, uptime 0:00:07
@@ -61,6 +64,7 @@ portainer                        RUNNING   pid 1162, uptime 0:00:07
 Note that we cannot use docker _portainer/portainer_ because stack creations using docker-compose won't be able to access files inside the docker where the repo is checked out from the host docker.
 
 Now create the required metadata. To do so, please connect using a browser to localhost:9000. Then:
+
 -   Create users.
 -   Create teams.
 -   Create a local Docker endpoint (name: `local`) and assign to those teams with access rights.
@@ -68,15 +72,14 @@ Now create the required metadata. To do so, please connect using a browser to lo
 
 ### Webapp
 
-First edit the available URLs for the given server in 
-src/config.ts
+First edit the available URLs for the given server in `src/config.ts`. Make sure that we have node in 8+ version, and run:
 
-
-Being sure that we have node in 8+ version...
 ```
 $ yarn install
-$ yarn build
+$ PUBLIC_URL=/ REACT_APP_PORTAINER_URL=/portainer yarn build
 ```
+
+Change `PUBLIC_URL` and `REACT_APP_PORTAINER_URL` to match your web server configuration.
 
 ## Nginx
 
