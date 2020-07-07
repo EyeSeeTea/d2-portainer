@@ -1,17 +1,13 @@
 import React from "react";
 import { useLoggedAppContext } from "../AppContext";
 
-interface PortainerLoginProps {
-    onLogin: () => void;
-}
-
-export const PortainerLogin: React.FC<PortainerLoginProps> = React.memo(props => {
-    const { onLogin } = props;
+export const PortainerLogin: React.FC<{}> = React.memo(props => {
     const iframeRef = React.useRef<HTMLIFrameElement>(null);
     const { compositionRoot, userSession: currentUser } = useLoggedAppContext();
     const portainerUrl = React.useMemo(() => compositionRoot.dataSource.info().url, [
         compositionRoot,
     ]);
+    const [isLoggedIn, setLoggedIn] = React.useState(false);
 
     const login = React.useCallback(async () => {
         const iframe = iframeRef.current;
@@ -34,19 +30,23 @@ export const PortainerLogin: React.FC<PortainerLoginProps> = React.memo(props =>
                 localStorage["portainer.ENDPOINT_ID"] = JSON.stringify(currentUser.endpointId);
             }
 
-            onLogin();
+            setLoggedIn(true);
         }
-    }, [currentUser, onLogin]);
+    }, [currentUser, setLoggedIn]);
 
-    return (
-        <iframe
-            style={{ display: "none" }}
-            ref={iframeRef}
-            title="Portainer login"
-            src={portainerUrl}
-            width="100%"
-            height="800"
-            onLoad={login}
-        />
-    );
+    if (isLoggedIn) {
+        return <React.Fragment>{props.children}</React.Fragment>;
+    } else {
+        return (
+            <iframe
+                style={{ display: "none" }}
+                ref={iframeRef}
+                title="Portainer login"
+                src={portainerUrl}
+                width="100%"
+                height="800"
+                onLoad={login}
+            />
+        );
+    }
 });

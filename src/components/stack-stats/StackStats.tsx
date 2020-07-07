@@ -19,7 +19,6 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
     const title = i18n.t("Stats: ") + stack.dataImage;
     const stats = compositionRoot.stacks.getStats(stack);
     const contentsRef = React.useRef<HTMLDivElement | null>(null);
-    const [isPortainerLoggedIn, setPortainerLoggedIn] = React.useState(false);
 
     return (
         <ConfirmationDialog
@@ -30,15 +29,13 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
             fullWidth={true}
             maxWidth="xl"
         >
-            {isPortainerLoggedIn ? (
+            <PortainerLogin>
                 <div className={classes.root} ref={contentsRef}>
                     <StatsDetails title={i18n.t("Core")} url={stats.core} />
                     <StatsDetails title={i18n.t("Database")} url={stats.db} />
                     <StatsDetails title={i18n.t("Nginx")} url={stats.gateway} />
                 </div>
-            ) : (
-                <PortainerLogin onLogin={() => setPortainerLoggedIn(true)} />
-            )}
+            </PortainerLogin>
         </ConfirmationDialog>
     );
 });

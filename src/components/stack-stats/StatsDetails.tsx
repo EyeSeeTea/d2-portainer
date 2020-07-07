@@ -25,8 +25,10 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
         if (!idocument) {
             return;
         } else if (!idocument.querySelector(".row.header")) {
+            console.debug("Wait for page");
             setTimeout(cleanPage, 1000);
         } else {
+            console.debug("Clean page");
             on(idocument, "#sideview", el => hide(el));
             on(idocument, "#page-wrapper", el => (el.style.paddingLeft = "0px"));
             on(idocument, ".row.ng-scope", el => hide(el));
