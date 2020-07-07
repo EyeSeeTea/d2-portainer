@@ -5,6 +5,7 @@ import { D2Stack } from "../../domain/entities/D2Stack";
 import { useLoggedAppContext } from "../AppContext";
 import { makeStyles } from "@material-ui/core";
 import { StatsDetails } from "./StatsDetails";
+import { PortainerLogin } from "./PortainerLogin";
 
 interface StackStatsProps {
     stack: D2Stack;
@@ -18,6 +19,7 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
     const title = i18n.t("Stats: ") + stack.dataImage;
     const stats = compositionRoot.stacks.getStats(stack);
     const contentsRef = React.useRef<HTMLDivElement | null>(null);
+    const [isPortainerLoggedIn, setPortainerLoggedIn] = React.useState(false);
 
     return (
         <ConfirmationDialog
@@ -28,11 +30,15 @@ export const StackStats: React.FC<StackStatsProps> = React.memo(props => {
             fullWidth={true}
             maxWidth="xl"
         >
-            <div className={classes.root} ref={contentsRef}>
-                <StatsDetails title={i18n.t("Core")} url={stats.core} />
-                <StatsDetails title={i18n.t("Database")} url={stats.db} />
-                <StatsDetails title={i18n.t("Nginx")} url={stats.gateway} />
-            </div>
+            {isPortainerLoggedIn ? (
+                <div className={classes.root} ref={contentsRef}>
+                    <StatsDetails title={i18n.t("Core")} url={stats.core} />
+                    <StatsDetails title={i18n.t("Database")} url={stats.db} />
+                    <StatsDetails title={i18n.t("Nginx")} url={stats.gateway} />
+                </div>
+            ) : (
+                <PortainerLogin onLogin={() => setPortainerLoggedIn(true)} />
+            )}
         </ConfirmationDialog>
     );
 });
