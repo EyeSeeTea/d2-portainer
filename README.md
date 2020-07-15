@@ -1,4 +1,4 @@
-Control d2-docker containers using portainer
+Manage d2-docker containers using Portainer.
 
 ## Setup
 
