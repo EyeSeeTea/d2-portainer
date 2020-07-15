@@ -95,7 +95,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
     }
 
     getStatsUrls(stack: D2Stack): D2StackStats {
-        const baseUrl = this.api.baseUrl;
+        const baseUrl = this.api.baseUrl.replace(/\/*$/, "");
         return _.mapValues(
             stack.containers,
             container => `${baseUrl}/#/containers/${container.id}/stats`
