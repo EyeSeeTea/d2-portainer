@@ -7,7 +7,6 @@ import {
     makeStyles,
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import { useLoggedAppContext } from "../AppContext";
 
 interface StatsDetailsProps {
     title: string;
@@ -18,38 +17,24 @@ interface StatsDetailsProps {
 export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
     const { title, url, initialOpen } = props;
     const classes = useStyles();
-    const { userSession: currentUser } = useLoggedAppContext();
     const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
-    const login = React.useCallback(() => {
-        const iframe = iframeRef.current;
-        const idocument = iframe?.contentWindow?.document;
-        if (!iframe || !iframe.contentWindow || !idocument) return;
-        const sideview = idocument.querySelector("#sideview");
+    const cleanPage = React.useCallback(() => {
+        const idocument = iframeRef.current?.contentWindow?.document;
 
-        if (!sideview) {
-            setTimeout(login, 1000);
+        if (!idocument) {
+            return;
+        } else if (!idocument.querySelector(".row.header")) {
+            console.debug("Wait for page");
+            setTimeout(cleanPage, 1000);
         } else {
-            const isLoginPage = !!idocument.querySelector(
-                '[ng-show="!ctrl.state.loginInProgress"]'
-            );
-            if (isLoginPage) {
-                const { localStorage } = iframe.contentWindow;
-                localStorage["portainer.JWT"] = JSON.stringify(currentUser.token);
-                localStorage["portainer.ENDPOINT_ID"] = JSON.stringify(currentUser.endpointId);
-                const location = iframe.contentWindow.location;
-                setTimeout(() => {
-                    location.replace(url + "#" + new Date().getTime());
-                    login();
-                }, 1000);
-            } else {
-                on(idocument, "#sideview", el => remove(el));
-                on(idocument, "#page-wrapper", el => (el.style.paddingLeft = "0px"));
-                on(idocument, ".row.ng-scope", el => remove(el));
-                onAll(idocument, ".row.header", el => remove(el));
-            }
+            console.debug("Clean page");
+            on(idocument, "#sideview", el => hide(el));
+            on(idocument, "#page-wrapper", el => (el.style.paddingLeft = "0px"));
+            on(idocument, ".row.ng-scope", el => hide(el));
+            onAll(idocument, ".row.header", el => hide(el));
         }
-    }, [currentUser, url]);
+    }, []);
 
     return (
         <ExpansionPanel className={classes.panel} defaultExpanded={initialOpen}>
@@ -67,7 +52,7 @@ export const StatsDetails: React.FC<StatsDetailsProps> = React.memo(props => {
                     frameBorder="0"
                     marginHeight={0}
                     marginWidth={0}
-                    onLoad={login}
+                    onLoad={cleanPage}
                 />
             </ExpansionPanelDetails>
         </ExpansionPanel>
@@ -84,7 +69,7 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-function remove<T extends HTMLElement>(element: T): void {
+function hide<T extends HTMLElement>(element: T): void {
     element.style.display = "none";
 }
 
@@ -93,11 +78,7 @@ function on(document: Document, selector: string, action: (el: HTMLElement) => v
     if (element) action(element);
 }
 
-function onAll<T extends Element>(
-    document: Document,
-    selector: string,
-    action: (el: HTMLElement) => void
-): void {
+function onAll(document: Document, selector: string, action: (el: HTMLElement) => void): void {
     const elements = document.querySelectorAll<HTMLElement>(selector);
     Array.from(elements).forEach(el => action(el));
 }
