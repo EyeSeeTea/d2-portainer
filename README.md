@@ -8,33 +8,38 @@ Download and start a portainer instance on http://localhost:9000 (agent at :8000
 
 ```
 # create a separate folder for portainer, and inside...
-$ wget https://github.com/portainer/portainer/releases/latest/download/portainer-1.24.0-linux-amd64.tar.gz
+$ wget https://github.com/portainer/portainer/releases/download/1.24.0/portainer-1.24.0-linux-amd64.tar.gz
 $ tar -xvzf portainer-1.24.0-linux-amd64.tar.gz
-# (use a user with permissions for /var/run/docker.sock or root)
+```
+
+Let's check that it works (use a user with permissions for /var/run/docker.sock or root):
+
+```
+$ cd portainer
 $ sudo ./portainer --bind :9000 --tunnel-port 8000 --data data --assets . --template-file templates.json --admin-password=$(htpasswd -nb -B admin 123123123 | cut -d ":" -f2)
 ```
 
-Start on boot-up, using supervisor:
-
-Create the following file in `/path/to/portainer-folder/portainer.ini`:
+We tipically need that portainer starts on boot. We can use supervisor for that. Change `ubuntu` if you want to run the daemon with another user:
 
 ```
+# /etc/supervisor/conf.d/portainer.conf (or .ini on some distros)
 [program:portainer]
-user = user
-directory = /path/to/portainer-folder/portainer
-command = /path/to/portainer-folder/portainer --bind :9000 --tunnel-port 8000 --data data --assets . --template-file templates.json
+user = ubuntu
+directory = /path/to/portainer
+command = /path/to/portainer/portainer --bind :9000 --tunnel-port 8000 --data data --assets . --template-file templates.json
 autostart = true
 autorestart = true
 stdout_capture_maxbytes = 50MB
 stderr_capture_maxbytes = 50MB
-stdout_logfile = /path/to/portainer-folder/logs/stdout.log
-stderr_logfile = /path/to/portainer-folder/logs/stderr.log
-#environment=http_proxy="yourproxy",https_proxy="yourproxy",no_proxy="localhost,127.0.0.1"
+stdout_logfile = /path/to/portainer/logs/stdout.log
+stderr_logfile = /path/to/portainer/logs/stderr.log
+# Uncomment if you have HTTP proxy
+# environment=http_proxy="yourproxy",https_proxy="yourproxy",no_proxy="localhost,127.0.0.1"
 ```
 
 ```
-$ sudo mkdir /path/to/portainer-folder/logs
-$ chown -R user:user /path/to/portainer-folder
+$ sudo mkdir /path/to/portainer/logs
+$ chown -R ubuntu:ubuntu /path/to/portainer-folder
 ```
 
 Installing supervisor
@@ -51,7 +56,6 @@ Reloading config
 
 ```
 $ sudo supervisorctl reload
-$ sudo supervisorctl status
 ```
 
 Should answer with status as follows:
@@ -61,34 +65,35 @@ Should answer with status as follows:
 portainer                        RUNNING   pid 1162, uptime 0:00:07
 ```
 
-Note that we cannot use docker _portainer/portainer_ because stack creations using docker-compose won't be able to access files inside the docker where the repo is checked out from the host docker.
+Note that we cannot use docker image _portainer/portainer_ because stack creations using docker-compose won't be able to access files inside the docker where the repo is checked out from the host docker.
 
 Now create the required metadata. To do so, please connect using a browser to localhost:9000. Then:
 
+-   Connect to "Local (Manage the local Docker environment)".
 -   Create users.
 -   Create teams.
--   Create a local Docker endpoint (name: `local`) and assign to those teams with access rights.
+-   Update the default local Docker endpoint (name: `local`) and assign to those teams with access rights.
 -   Registries -> DockerHub: Configure auth.
 
 ### Webapp
 
-First edit the available URLs for the given server in `src/config.ts`. Make sure that we have node in 8+ version, and run:
+Edit property `urlMappings` in `src/config.ts` with the available Dhis2 Instances.
 
 ```
 $ yarn install
-$ PUBLIC_URL=/ REACT_APP_PORTAINER_URL=/portainer yarn build
+$ PUBLIC_URL=/d2-portainer REACT_APP_PORTAINER_URL=/portainer yarn build
 ```
 
-Change `PUBLIC_URL` and `REACT_APP_PORTAINER_URL` to match your web server configuration.
+Change `PUBLIC_URL` and `REACT_APP_PORTAINER_URL` to match your server configuration.
 
 ## Nginx
 
-Serve production at http://localhost:9003 with wrappings to portainer and the deployed webapp.
+Serve production at http://localhost:9001 with wrappings to portainer (port 9000):
 
 ```
 http {
     server {
-        listen 9003;
+        listen 9001;
         server_name localhost;
 
         location /portainer/ {
@@ -96,20 +101,23 @@ http {
         }
 
         location / {
-            alias /path/to/webapp/build;
+            alias /path/to/d2-portainer/build;
         }
     }
 }
 ```
 
+Make sure nginx user (typically `www-data`) can access the build folder.
+
 ## Apache
 
 ```
-<VirtualHost *:9003>
+<VirtualHost *:9001>
     Proxypass /portainer/ http://localhost:9000/
     ProxypassReverse /portainer/ http://localhost:9000/
-    Alias / /path/to/d2-portainer-folder/build/
-    <Directory /path/to/d2-portainer-folder/build>
+    Alias / /path/to/d2-portainer/build/
+
+    <Directory /path/to/d2-portainer/build>
       DirectoryIndex index.html
       AllowOverride All
       Options FollowSymlinks SymLinksIfOwnerMatch
