@@ -77,7 +77,7 @@ Now create the required metadata. To do so, please connect using a browser to lo
 
 ### Webapp
 
-Edit property `urlMappings` in `src/config.ts` with the available Dhis2 Instances.
+Edit property `urlMappingsSource` and `urlMappings` in `src/config.ts` with the available Dhis2 Instances.
 
 ```
 $ yarn install
