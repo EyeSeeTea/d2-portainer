@@ -20,16 +20,16 @@ const disabledFields: Array<keyof D2NewStack> = [
 
 export const EditStackPage: React.FC<EditStackPageProps> = React.memo(props => {
     const history = useHistory();
-    const { compositionRoot } = useAppContext();
+    const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
     const goToList = React.useCallback(() => history.push("/"), [history]);
     const [stack, setStack] = React.useState<D2Stack | undefined>();
 
     React.useEffect(() => {
         compositionRoot.stacks
-            .getById(props.id)
+            .getById(props.id, config)
             .then(showSnackbar(compositionRoot, snackbar, { action: setStack }));
-    }, [compositionRoot, snackbar, goToList, props.id]);
+    }, [compositionRoot, snackbar, goToList, props.id, config]);
 
     const update = React.useCallback(
         (stack: D2Stack) => {

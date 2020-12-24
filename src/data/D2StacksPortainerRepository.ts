@@ -3,6 +3,7 @@ import {
     getUrlFromStringPort,
     getBranch,
     getPort,
+    getContext,
 } from "../domain/entities/D2NewStack";
 import { PostStackRequest, Permission, Stack, Container } from "./PortainerApiTypes";
 import _ from "lodash";
@@ -14,9 +15,9 @@ import {
 } from "../domain/repositories/D2StacksRepository";
 import { PortainerApi } from "./PortainerApi";
 import { Either } from "../utils/Either";
-import config from "../config";
 import { PromiseRes } from "../utils/types";
 import { Acl } from "../domain/entities/Acl";
+import { Config } from "../domain/entities/Config";
 
 export class D2StacksPortainerRepository implements D2StacksRepository {
     constructor(public api: PortainerApi) {}
@@ -37,13 +38,13 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         return Either.success(undefined);
     }
 
-    async create(d2NewStack: D2NewStack): PromiseRes<MaybeWarnings<void>> {
+    async create(d2NewStack: D2NewStack, config: Config): PromiseRes<MaybeWarnings<void>> {
         const baseName = "d2-docker" + d2NewStack.dataImage.replace(/dhis2-data/, "");
         const name = baseName.replace(/[^\w]/g, "");
         const { dockerComposeRepository: repo } = config;
-        const branch = getBranch(d2NewStack);
+        const branch = getBranch(config, d2NewStack);
         if (!branch) return Either.error("Url not specified");
-        const port = getPort(d2NewStack);
+        const port = getPort(config, d2NewStack);
         if (!port) return Either.error("Cannot get port");
 
         const postStackRequest: PostStackRequest = {
@@ -54,6 +55,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
             Env: [
                 { name: "DHIS2_DATA_IMAGE", value: d2NewStack.dataImage },
                 { name: "DHIS2_CORE_IMAGE", value: d2NewStack.coreImage },
+                { name: "DHIS2_CONTEXT", value: getContext(d2NewStack) || "" },
                 { name: "PORT", value: port.toString() },
             ],
         };
@@ -106,21 +108,21 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
         return this.api.deleteStacks(ids.map(id => parseInt(id)));
     }
 
-    async getById(id: string): PromiseRes<D2Stack> {
+    async getById(id: string, config: Config): PromiseRes<D2Stack> {
         const [stackRes, containersRes] = await Promise.all([
             this.api.getStack(parseInt(id)),
             this.api.getContainers({ all: true }),
         ]);
 
         return Either.flatMap2([stackRes, containersRes], (apiStack, apiContainers) => {
-            const stack = buildD2Stack(apiContainers, apiStack);
+            const stack = buildD2Stack(apiContainers, apiStack, config);
             return stack
                 ? Either.success<string, D2Stack>(stack)
                 : Either.error("Cannot get stack");
         });
     }
 
-    async get(): PromiseRes<D2Stack[]> {
+    async get(config: Config): PromiseRes<D2Stack[]> {
         const [stacksRes, containersRes] = await Promise.all([
             this.api.getStacks(),
             this.api.getContainers({ all: true }),
@@ -128,7 +130,7 @@ export class D2StacksPortainerRepository implements D2StacksRepository {
 
         return Either.map2([stacksRes, containersRes], (apiStacks, apiContainers) => {
             return _(apiStacks)
-                .map(apiStack => buildD2Stack(apiContainers, apiStack))
+                .map(apiStack => buildD2Stack(apiContainers, apiStack, config))
                 .compact()
                 .value();
         });
@@ -156,7 +158,11 @@ function getAcl(apiStack: Stack) {
     return acl;
 }
 
-function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | undefined {
+function buildD2Stack(
+    apiContainers: Container[],
+    apiStack: Stack,
+    config: Config
+): D2Stack | undefined {
     const apiContainersForGroup = _(apiContainers)
         .filter(c => c.Labels["com.docker.compose.project"] === apiStack.Name)
         .value();
@@ -177,7 +183,7 @@ function buildD2Stack(apiContainers: Container[], apiStack: Stack): D2Stack | un
         .value();
 
     const acl = getAcl(apiStack);
-    const url = getUrlFromStringPort(env["PORT"]);
+    const url = getUrlFromStringPort(config, env["PORT"]);
 
     if (!_.every(containers) || !url) return;
 

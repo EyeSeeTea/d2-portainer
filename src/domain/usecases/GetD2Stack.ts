@@ -1,11 +1,12 @@
 import { D2StacksRepository } from "../repositories/D2StacksRepository";
 import { PromiseRes } from "../../utils/types";
 import { D2Stack } from "../entities/D2Stack";
+import { Config } from "../entities/Config";
 
 export class GetD2Stack {
     constructor(private stacksRepository: D2StacksRepository) {}
 
-    async execute(id: string): PromiseRes<D2Stack> {
-        return this.stacksRepository.getById(id);
+    async execute(id: string, config: Config): PromiseRes<D2Stack> {
+        return this.stacksRepository.getById(id, config);
     }
 }

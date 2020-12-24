@@ -1,5 +1,6 @@
 import React from "react";
 import { CompositionRoot } from "../CompositionRoot";
+import { Config } from "../domain/entities/Config";
 import { UserSession } from "../domain/entities/UserSession";
 
 export const AppContext = React.createContext<AppContextValue | undefined>(undefined);
@@ -8,11 +9,12 @@ export interface AppContextValue {
     compositionRoot: CompositionRoot;
     userSession: UserSession | null;
     isDev: boolean;
+    config: Config;
 }
 
 export type AppContextLoggedValue = AppContextValue & { userSession: UserSession };
 
-type AppContextProps = Pick<AppContextValue, "compositionRoot" | "userSession">;
+type AppContextProps = Pick<AppContextValue, "compositionRoot" | "userSession" | "config">;
 
 export const AppContextProvider: React.FC<AppContextProps> = React.memo(props => {
     const { children, ...other } = props;

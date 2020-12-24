@@ -11,13 +11,13 @@ interface NewStackPageProps {}
 
 export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
     const history = useHistory();
-    const { compositionRoot, isDev } = useAppContext();
+    const { compositionRoot, isDev, config } = useAppContext();
     const snackbar = useSnackbar();
     const goToList = React.useCallback(() => history.push("/"), [history]);
 
     const save = React.useCallback(
         (stack: D2NewStack) => {
-            return compositionRoot.stacks.create(stack).then(
+            return compositionRoot.stacks.create(stack, config).then(
                 showSnackbar(compositionRoot, snackbar, {
                     message: i18n.t(`Stack created: ${stack.dataImage}`),
                     action: res => {
@@ -31,7 +31,7 @@ export const NewStackPage: React.FC<NewStackPageProps> = React.memo(() => {
                 })
             );
         },
-        [compositionRoot, snackbar, goToList]
+        [compositionRoot, snackbar, goToList, config]
     );
 
     const stack = isDev ? debugInitialStack : defaultInitialStack;

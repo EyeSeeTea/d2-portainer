@@ -32,7 +32,7 @@ const refreshRate = 10;
 interface StacksListProps {}
 
 export const StacksList: React.FC<StacksListProps> = React.memo(() => {
-    const { compositionRoot } = useLoggedAppContext();
+    const { compositionRoot, config } = useLoggedAppContext();
     const [stacks, setStacks] = React.useState<D2Stack[]>([]);
     const [search, setSearch] = React.useState<string>("");
     const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
@@ -67,9 +67,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
 
     const getStacks = React.useCallback(() => {
         compositionRoot.stacks
-            .get()
+            .get(config)
             .then(showSnackbar(compositionRoot, snackbar, { message: "", action: setStacks }));
-    }, [compositionRoot, snackbar]);
+    }, [compositionRoot, snackbar, config]);
 
     React.useEffect(() => {
         getStacks();
