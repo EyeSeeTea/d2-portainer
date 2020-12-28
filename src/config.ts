@@ -4,7 +4,7 @@ const baseConfig: BaseConfig = {
     appName: "WHO D2 Portainer",
     endpointName: "local",
     dockerComposeRepository: {
-        url: "http://github.com/tokland/d2-portainer-config",
+        url: "http://github.com/EyeSeeTea/d2-portainer-config",
         path: "docker-compose.yml",
         // Final branch: `urlMapping.branch || defaultBranch || urlMapping.name`.
         defaultBranch: "https-generic",
