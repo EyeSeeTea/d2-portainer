@@ -11,7 +11,7 @@ import { UserSession } from "../../domain/entities/UserSession";
 import { i18n } from "../../i18n";
 import { Grow } from "@material-ui/core";
 import logoImage from "../../images/D2-Docker-Logo.png";
-import config from "../../config";
+import baseConfig from "../../config";
 
 /* From https://react.school/material-ui/templates */
 
@@ -63,7 +63,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
             const login = await compositionRoot.dataSource.login(
                 username.trim(),
                 password.trim(),
-                config.endpointName
+                baseConfig.endpointName
             );
             login.match({ success: setUserSession, error: setError });
         }
@@ -84,7 +84,7 @@ export const LoginPage: React.FC<LoginPageProps> = React.memo(props => {
                 <img src={logoImage} alt="Logo" width="100" height="100" />
 
                 <Typography component="h1" variant="h5">
-                    {config.appName} - {i18n.t("Sign in")}
+                    {baseConfig.appName} - {i18n.t("Sign in")}
                 </Typography>
                 <div className={classes.form}>
                     <TextField

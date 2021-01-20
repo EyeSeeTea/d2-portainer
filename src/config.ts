@@ -1,17 +1,20 @@
-import { Config } from "./config.types";
+import { BaseConfig } from "./domain/entities/Config";
 
-const config: Config = {
+const baseConfig: BaseConfig = {
     appName: "WHO D2 Portainer",
     endpointName: "local",
     dockerComposeRepository: {
-        url: "http://github.com/tokland/tests",
+        url: "http://github.com/EyeSeeTea/d2-portainer-config",
         path: "docker-compose.yml",
-        // Branch: urlMapping.name
+        // Final branch: `urlMapping.branch || defaultBranch || urlMapping.name`.
+        defaultBranch: "https-generic",
+    },
+    urlMappingsSource: {
+        type: "url",
+        url: "https://raw.githubusercontent.com/eyeseetea/d2-portainer-config/master/config.json",
     },
     urlMappings: [
-        { url: "http://localhost:8080/dhis2", port: 8080, name: "local-dhis2" },
-        { url: "http://localhost:8081", port: 8081, name: "master" },
-        { url: "http://localhost:8082", port: 8082, name: "master" },
+        //{ name: "who", url: "https://dev.eyeseetea.com/who", port: 8080 },
     ],
     feedback: {
         token: ["03242fc6b0c5a48582", "2e6b8d3e8337b5a0b95fe2"],
@@ -32,4 +35,4 @@ const config: Config = {
     },
 };
 
-export default config;
+export default baseConfig;

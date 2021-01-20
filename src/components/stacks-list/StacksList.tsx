@@ -31,9 +31,11 @@ const refreshRate = 10;
 
 interface StacksListProps {}
 
+const emptyStacks: D2Stack[] = [];
+
 export const StacksList: React.FC<StacksListProps> = React.memo(() => {
-    const { compositionRoot } = useLoggedAppContext();
-    const [stacks, setStacks] = React.useState<D2Stack[]>([]);
+    const { compositionRoot, config } = useLoggedAppContext();
+    const [stacksState, setStacks] = React.useState<D2Stack[]>();
     const [search, setSearch] = React.useState<string>("");
     const [stackStats, setStackStats] = React.useState<D2Stack | undefined>();
     const [selection, setSelection] = React.useState<TableSelection[]>([]);
@@ -42,6 +44,7 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     const history = useHistory();
     const snackbar = useSnackbar();
     const classes = useStyles();
+    const stacks = stacksState || emptyStacks;
 
     const openDeleteConfirmation = React.useCallback(
         (ids: string[]) => {
@@ -67,9 +70,9 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
 
     const getStacks = React.useCallback(() => {
         compositionRoot.stacks
-            .get()
+            .get(config)
             .then(showSnackbar(compositionRoot, snackbar, { message: "", action: setStacks }));
-    }, [compositionRoot, snackbar]);
+    }, [compositionRoot, snackbar, config]);
 
     React.useEffect(() => {
         getStacks();
@@ -199,7 +202,8 @@ export const StacksList: React.FC<StacksListProps> = React.memo(() => {
     return (
         <div className={classes.table}>
             {stackStats && <StackStats stack={stackStats} onClose={closeStats} />}
-            {actionActive && <LinearProgress className={classes.linearProgress} />}
+            {actionActive ||
+                (!stacksState && <LinearProgress className={classes.linearProgress} />)}
 
             <ObjectsTable<D2Stack>
                 rows={filteredStacks}

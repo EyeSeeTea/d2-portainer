@@ -20,6 +20,9 @@ import { LogoutUser } from "./domain/usecases/LogoutUser";
 import { LoginUserFromSession } from "./domain/usecases/LoginUserFromSession";
 import { UpdateD2Stacks } from "./domain/usecases/UpdateD2Stack";
 import { DeleteD2Stacks } from "./domain/usecases/DeleteD2Stacks";
+import { ConfigRepository } from "./domain/repositories/ConfigRepository";
+import { ConfigNetworkRepository } from "./data/ConfigNetworkRepository";
+import { GetConfig } from "./domain/usecases/GetConfig";
 
 export function getDefaultCompositionRoot(options: {
     portainerApi: PortainerApi;
@@ -27,6 +30,7 @@ export function getDefaultCompositionRoot(options: {
     const { portainerApi } = options;
 
     return new CompositionRoot(
+        new ConfigNetworkRepository(),
         new DataSourcePortainerRepository(portainerApi),
         new D2StacksPortainerRepository(portainerApi),
         new SessionBrowserStorageRepository(),
@@ -36,11 +40,16 @@ export function getDefaultCompositionRoot(options: {
 
 export class CompositionRoot {
     constructor(
+        private configRepository: ConfigRepository,
         private dataSourceRepository: DataSourceRepository,
         private stacksRepository: D2StacksRepository,
         private sessionRepository: SessionRepository,
         private membershipsRepository: MembershipRepository
     ) {}
+
+    config = getExecute({
+        get: new GetConfig(this.configRepository),
+    });
 
     dataSource = getExecute({
         login: new LoginUser(this.dataSourceRepository, this.sessionRepository),

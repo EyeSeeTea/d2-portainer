@@ -6,7 +6,6 @@ import { useSnackbar } from "d2-ui-components";
 import { i18n } from "../../i18n";
 import { FormButton } from "./FormButton";
 import { D2NewStack, setCoreImageFromData } from "../../domain/entities/D2NewStack";
-import config from "../../config";
 import { FormTextField } from "./FormTextField";
 import { FormSelectField, Option } from "./FormSelectField";
 import { FormMultipleSelectField } from "./FormMultipleSelectField";
@@ -33,7 +32,7 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
     const { onChange, onSave, onCancelRequest } = props;
     const { saveButtonLabel, initialStack, disabledFields = [] } = props;
     const classes = useStyles();
-    const { compositionRoot } = useLoggedAppContext();
+    const { compositionRoot, config } = useLoggedAppContext();
     const [stack, setStack] = React.useState(initialStack);
     const [isSaving, setIsSaving] = React.useState(false);
     const snackbar = useSnackbar();
@@ -83,6 +82,13 @@ export function StackForm<T extends D2NewStack>(props: StackFormProps<T>) {
     }, [stack, onSave]);
 
     const isFormValid = stack.dataImage && stack.coreImage && stack.url;
+
+    const urlMappingOptions = React.useMemo(() => {
+        return config.urlMappings.map(mapping => ({
+            value: mapping.url,
+            label: mapping.url,
+        }));
+    }, [config]);
 
     return (
         <Card>
@@ -177,11 +183,6 @@ const accessOptions: Array<{ value: Access; label: string }> = [
     { value: "restricted", label: i18n.t("Restricted") },
     { value: "admin", label: i18n.t("Administrators") },
 ];
-
-const urlMappingOptions = config.urlMappings.map(mapping => ({
-    value: mapping.url,
-    label: mapping.url,
-}));
 
 function getOptions<T extends { id: number; name: string }>(objs: T[]): Option[] {
     return objs.map(obj => ({ value: obj.id.toString(), label: obj.name }));

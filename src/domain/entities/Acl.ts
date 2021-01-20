@@ -1,10 +1,7 @@
-import _ from "lodash";
-import { Container } from "./Container";
-
-type Access = "restricted" | "admin";
+export type Access = "restricted" | "admin";
 
 export interface Acl {
-    access: "restricted" | "admin";
+    access: Access;
     teamIds: number[];
     userIds: number[];
 }

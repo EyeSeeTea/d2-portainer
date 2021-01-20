@@ -8,9 +8,10 @@ import { getDefaultCompositionRoot } from "./CompositionRoot";
 import { PortainerApi } from "./data/PortainerApi";
 import { match } from "./utils/tagged-union";
 import { CircularProgress, MuiThemeProvider } from "@material-ui/core";
-import config from "./config";
 import { initFeedbackTool } from "./utils/feedback-tool";
 import { muiTheme } from "./dhis2.theme";
+import { Config } from "./domain/entities/Config";
+import baseConfig from "./config";
 
 interface AppProps {
     portainerUrl: string;
@@ -31,7 +32,7 @@ const App: React.FC<AppProps> = React.memo(props => {
 
     const [state, setState] = React.useState<State>({ type: "getFromSession" });
 
-    React.useEffect(() => initFeedbackTool(config.feedback, window as any), []);
+    React.useEffect(() => initFeedbackTool(baseConfig.feedback, window as any), []);
 
     React.useEffect(() => {
         if (state.type === "getFromSession") {
@@ -49,9 +50,32 @@ const App: React.FC<AppProps> = React.memo(props => {
 
     const userSession = state.type === "loggedIn" ? state.userSession : null;
 
+    const [config, setConfig] = React.useState<Config>();
+    React.useEffect(() => {
+        async function get() {
+            const configRes = await compositionRoot.config.get();
+            configRes.match({
+                success: config => {
+                    (window as any).config = config;
+                    setConfig(config);
+                },
+                error: () => {
+                    throw new Error("Cannot get config");
+                },
+            });
+        }
+        get();
+    }, [compositionRoot]);
+
+    if (!config) return null;
+
     return (
         <MuiThemeProvider theme={muiTheme}>
-            <AppContextProvider compositionRoot={compositionRoot} userSession={userSession}>
+            <AppContextProvider
+                compositionRoot={compositionRoot}
+                userSession={userSession}
+                config={config}
+            >
                 <SnackbarProvider>
                     {match(state, {
                         getFromSession: () => <CircularProgress />,
